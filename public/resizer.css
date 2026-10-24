@@ -1,0 +1,92 @@
+/* ========== RESIZER (горизонтальная раскладка — по умолчанию) ========== */
+.resizer {
+  width: 2px;
+  cursor: col-resize;
+  background: var(--border);
+  flex-shrink: 0;
+  position: relative;
+  transition: background .15s;
+  z-index: 5;
+  user-select: none;
+}
+.resizer:hover,
+.resizer.active {
+  background: var(--primary);
+}
+.resizer::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 2px; height: 30px;
+  border-left: 1px dotted var(--muted);
+  border-right: 1px dotted var(--muted);
+  pointer-events: none;
+}
+.resizer:hover::after,
+.resizer.active::after {
+  border-color: #fff;
+}
+
+/* ========== ВЕРТИКАЛЬНАЯ РАСКЛАДКА (узкий экран) ========== */
+@media (max-width: 1000px) {
+  .panel { flex-direction: column; }
+
+  .form-panel,
+  .form-panel.form-wide {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    /* Высота управляется ресайзером */
+    height: 280px;
+    min-height: 150px;
+    max-height: 70vh;
+  }
+
+  /* Ресайзер становится горизонтальной полоской */
+  .resizer {
+    width: 100%;
+    height: 2px;
+    cursor: row-resize;
+  }
+  .resizer::after {
+    width: 30px;
+    height: 2px;
+    border-top: 1px dotted var(--muted);
+    border-bottom: 1px dotted var(--muted);
+    border-left: none;
+    border-right: none;
+  }
+}
+/* Блокировка выделения при ресайзе */
+body.resizing {
+  cursor: col-resize !important;
+  user-select: none !important;
+}
+body.resizing * {
+  cursor: col-resize !important;
+  user-select: none !important;
+}
+body.resizing-vertical {
+  cursor: row-resize !important;
+  user-select: none !important;
+}
+body.resizing-vertical * {
+  cursor: row-resize !important;
+  user-select: none !important;
+}  
+ /* ===== ГОРИЗОНТАЛЬНЫЙ РЕСАЙЗЕР ===== */
+.resizer.horizontal {
+  width: 100% !important;
+  height: 2px !important;
+  cursor: row-resize !important;
+  flex-shrink: 0;
+}
+.resizer.horizontal::after {
+  width: 30px !important;
+  height: 2px !important;
+  border-top: 1px dotted var(--muted) !important;
+  border-bottom: 1px dotted var(--muted) !important;
+  border-left: none !important;
+  border-right: none !important;
+}

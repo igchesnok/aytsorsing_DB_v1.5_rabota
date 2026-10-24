@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Редактор маршрутов</title>
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="../tab.css">
+  <link rel="stylesheet" href="../resizer.css">
+  <link rel="stylesheet" href="../route-editor.css">
+</head>
+<body>
+<div class="app">
+  <header class="app-header">
+    <h1>🔄 Редактор маршрутов движения детали</h1>
+    <div id="toast" class="toast hidden"></div>
+    <div id="wsStatus" class="ws-status disconnected">⚫ Offline</div>
+  </header>
+
+  <!-- ===== ВЕРХНЯЯ ПАНЕЛЬ: Выбор детали + фильтры ===== -->
+  <div class="route-topbar">
+    <div class="route-topbar-left">
+      <label class="route-label">Позиция плана:</label>
+      <div id="cmbDet"></div><!-- ✅ T94: VirtualSelect вместо select + input#fltDet -->
+      <button id="btnDetClear" class="btn btn-sm route-det-clear" title="Сбросить выбор позиции плана" disabled>✖</button>
+      <span id="lblDetCount" class="route-count">0 позиций</span>
+    </div>
+    <div class="route-topbar-right">
+      <label class="chk"><input type="checkbox" id="chkTO" disabled> ТО (закалка)</label>
+      <label class="chk"><input type="checkbox" id="chkPokr" disabled> Покрытие</label>
+    </div>
+  </div>
+
+  <!-- ===== ВКЛАДКИ ===== -->
+	<nav class="tabs">
+	  <button class="tab active" data-tab="tabShagi">📋 Шаги маршрута</button>
+	  <button class="tab" data-tab="tabOps" id="tabOpsBtn" disabled title="Выберите этап маршрута">⚙️ Операции маршрута</button>
+	</nav>
+<div class="panel gorizont" >
+  <main class="content">
+    <!-- ============ ВКЛАДКА: ШАГИ МАРШРУТА ============ -->
+    <section id="tabShagi" class="tab-content active">
+      <div class="panel vertikal">
+        <!-- Таблица шагов -->
+        <div class="table-panel">
+          <div class="toolbar">
+            <h3 class="table-title">Этапы маршрута <span class="hint">клик по заголовку — новый шаг</span></h3>
+            <div class="toolbar-btns">
+              <button class="btn btn-sm" id="btnUpShag" title="Вверх" disabled>↑</button>
+              <button class="btn btn-sm" id="btnDownShag" title="Вниз" disabled>↓</button>
+              <button class="btn btn-primary" id="btnShagAdd" title="Добавить" disabled>➕</button>
+              <button class="btn btn-success" id="btnShagSave" title="Сохранить" disabled>💾</button>
+              <button class="btn btn-danger"  id="btnShagDel" title="Удалить" disabled>✖</button>
+            </div>
+          </div>
+          <div id="shagiTable" class="vtable-container"></div>
+        </div>
+
+        <div class="resizer"></div>
+
+        <!-- Форма шага -->
+        <div class="form-panel form-wide">
+          <h4 id="shagFormTitle">Новый этап маршрута</h4>
+
+          <fieldset>
+            <legend>Исполнитель этапа</legend>
+            <div style="display: flex; gap: 20px;">
+              <label class="chk"><input type="radio" name="execShag" value="Контрагент" checked> КОНТРАГЕНТ (отправка)</label>
+              <label class="chk"><input type="radio" name="execShag" value="ПТО"> ПТО (получение)</label>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Тип транспортной операции</legend>
+            <label style="display: flex; flex-direction: column; gap: 4px;">
+              Тип этапа:
+              <select id="cmbTransportType"></select>
+            </label>
+          </fieldset>
+
+         <fieldset id="firstOpBlock">
+		  <legend>Первая операция этапа (только при создании нового шага)</legend>
+		  <div class="form-grid cols-2">
+			<label>Категория:
+			  <select id="cmbKatShag"></select>
+			</label>
+			<label>Наименование операции:
+			  <select id="cmbOperShag"></select>
+			</label>
+			<!-- Даты убраны: в шаблоне их нет, план/факт - в fakt_marshruta -->
+		  </div>
+		</fieldset>
+
+          <fieldset>
+            <legend>Комментарий</legend>
+            <textarea id="txtCommShag" rows="2" placeholder="Комментарий к этапу..."></textarea>
+          </fieldset>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ ВКЛАДКА: ОПЕРАЦИИ МАРШРУТА ============ -->
+    <section id="tabOps" class="tab-content">
+      <div class="panel">
+        <!-- Таблица операций -->
+        <div class="table-panel">
+          <div class="toolbar">
+            <h3 class="table-title">
+              Операции этапа: <span id="opsStepTitle" style="color: var(--primary);">—</span>
+            </h3>
+            <div class="toolbar-btns">
+              <button class="btn btn-primary" id="btnOpAdd" title="Добавить" disabled>➕</button>
+              <button class="btn btn-success" id="btnOpSave" title="Сохранить" disabled>💾</button>
+              <button class="btn btn-danger"  id="btnOpDel" title="Удалить" disabled>✖</button>
+            </div>
+          </div>
+          <div id="opsTable" class="vtable-container"></div>
+        </div>
+
+        <div class="resizer"></div>
+
+        <!-- Форма операции -->
+        <div class="form-panel form-wide">
+          <h4 id="opFormTitle">Операция этапа</h4>
+
+          <fieldset>
+            <legend>Параметры операции</legend>
+            <div class="form-grid cols-2">
+              <label>Категория:
+                <select id="cmbKatOp"></select>
+              </label>
+              <label>Наименование операции:
+                <select id="cmbOperOp"></select>
+              </label>
+            </div>
+            <!-- Даты/статус убраны: это факт (fakt_marshruta), а не шаблон -->
+          </fieldset>
+
+          <div id="opsEmptyHint" class="empty-state">
+            Выберите этап маршрута во вкладке «Шаги маршрута»
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ===== ГОРИЗОНТАЛЬНЫЙ РЕСАЙЗЕР ===== -->
+  <div class="resizer horizontal"></div>
+
+  <!-- ===== ПОДВАЛ: Групповые операции ===== -->
+  <div class="route-footer">
+    <fieldset>
+      <legend>Групповое применение маршрута к выделенным деталям</legend>
+      <div class="route-footer-grid">
+        <div class="table-panel">
+          <div class="toolbar">
+            <h3 class="table-title">Детали плана</h3>
+            <input type="text" id="fltDetFooter" class="route-filter" placeholder="🔍 Фильтр..." style="max-width: 250px;">
+          </div>
+          <div id="lstDet" class="vtable-container"></div>
+        </div>
+        <div class="route-footer-actions">
+          <div id="lblSelectedCount" class="route-counter">Выбрано деталей: 0</div>
+          <button id="btnApplyToSelected" class="btn btn-primary">📋 Применить маршрут текущей детали к выбранным</button>
+          <div id="lblMissingCount" class="route-counter missing-counter">Позиций без маршрута: …</div>
+          <button id="btnBulkCreate" class="btn btn-bulk" disabled>⚡ Массовое создание стандартных маршрутов</button>
+        </div>
+      </div>
+    </fieldset>
+  </div>
+</div>
+
+<!-- ===== МОДАЛЬНОЕ ОКНО: МАССОВОЕ СОЗДАНИЕ СТАНДАРТНЫХ МАРШРУТОВ ===== -->
+<div id="bulkModal" class="modal-overlay hidden">
+  <div class="modal-window">
+    <h3 class="modal-title">⚡ Массовое создание стандартных маршрутов</h3>
+    <p class="modal-info">
+      Для каждой позиции плана без маршрута будет создана стандартная пара этапов аутсорсинга:<br>
+      <b>Шаг 1 — отправка:</b> ПТО отправляет контрагенту заготовку, которая содержит операцию
+      «Механическая обработка» (стандартная предустановленная операция);<br>
+      <b>Шаг 2 — возврат:</b> контрагент возвращает ПТО готовую деталь.
+    </p>
+    <fieldset class="modal-fieldset">
+      <legend>Параметры стандартного маршрута</legend>
+      <div class="form-grid cols-3">
+        <label>Операция этапа отправки:
+          <select id="cmbBulkOper"></select>
+        </label>
+        <label>Тип перевозки (отправка):
+          <select id="cmbBulkTpOut"></select>
+        </label>
+        <label>Тип перевозки (получение):
+          <select id="cmbBulkTpIn"></select>
+        </label>
+      </div>
+    </fieldset>
+    <div class="modal-list-label">Позиции без маршрута: <span id="bulkListCount">0</span></div>
+    <div id="bulkList" class="modal-list"></div>
+    <div class="modal-actions">
+      <button id="btnBulkConfirm" class="btn btn-primary">✅ Создать маршруты</button>
+      <button id="btnBulkCancel" class="btn">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="../js/app-route-editor.js"></script>
+</body>
+</html>

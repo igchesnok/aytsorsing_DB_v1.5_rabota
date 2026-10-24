@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Формирование плана производства</title>
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="../resizer.css">
+  <!-- Локальные стили правой панели: компактная сетка «по содержимому».
+       Правки только разметки/стилей — id полей и JS-логика не затронуты. -->
+  <style id="planFormStyles">
+    /* Строки формы — flex с переносом: на узкой панели поля уходят на
+       следующую строку вместо сжатия колонок (fieldset больше не ломается
+       в form-wide). Длинные значения — на всю строку, короткие — по содержимому. */
+    .form-panel fieldset {
+      margin-bottom: 8px;
+      /* ✅ Chrome-квирк: у fieldset min-width:min-content по умолчанию —
+         панель не сжимается под широкую строку полей и «вылезает» за край.
+         Сбрасываем: строки .compact-row переносятся, а не растягивают панель. */
+      min-width: 0;
+    }
+
+    .compact-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;      /* инпуты выровнены по нижней линии */
+      gap: 6px 10px;
+    }
+    .compact-row.row-next { margin-top: 8px; }   /* вторая строка блока */
+
+    .compact-row label {
+      display: flex;
+      flex-direction: column;
+      font-size: 11px;
+      color: var(--muted);
+      font-weight: 600;
+      min-width: 0;
+    }
+    .compact-row input,
+    .compact-row select {
+      padding: 4px 6px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 12px;
+      margin-top: 2px;
+      background: #fff;
+      box-sizing: border-box;
+      min-width: 0;
+    }
+    .compact-row input:focus,
+    .compact-row select:focus {
+      border-color: var(--primary);
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(9,105,218,.15);
+    }
+    .compact-row input:disabled,
+    .compact-row select:disabled {
+      background: var(--row-hover);
+      color: var(--muted);
+    }
+
+    /* Ширина по содержимому: год — 4 цифры, кол-во — до 6 символов,
+       даты — календарь; растягиваются только поля с длинными значениями */
+    .fld-full       { flex: 1 1 100%; }  /* Деталь / Цех затрат / Примечание — вся строка */
+    .fld-grow       { flex: 1 1 200px; } /* Наим. осн. детали — растягиваемая */
+    .fld-year input   { width: 64px; }   /* год: строго 4 цифры */
+    .fld-qty input    { width: 84px; }   /* количество: до 6 символов */
+    .fld-num input    { width: 110px; }  /* № заказа ПТО */
+    .fld-money input  { width: 110px; }  /* Цена ПТО / Стоимость заготовки */
+    .fld-date input   { width: 128px; }  /* даты (dd.mm.yyyy) */
+    .fld-status input { width: 130px; }  /* Статус позиции */
+    .fld-peredel input{ width: 118px; }  /* Передел (авто) */
+
+    /* Инфоблок «Информация о детали»: раньше .info-grid не имел стилей,
+       рендерился голыми <span>. Теперь — компактная горизонтальная строка. */
+    .info-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px 18px;
+      padding: 2px 0;
+    }
+    .info-row { display: flex; align-items: baseline; gap: 5px; min-width: 0; }
+    .info-label { font-size: 11px; color: var(--muted); font-weight: 600; }
+    .info-value { font-size: 12px; color: var(--text); font-weight: 600;
+                  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+                  max-width: 180px; }
+  </style>
+</head>
+<body>
+<div class="app">
+  <header class="app-header">
+    <h1>📅 Формирование плана производства</h1>
+    <div id="toast" class="toast hidden"></div>
+    <div id="wsStatus" class="ws-status disconnected">⚫ Offline</div>
+  </header>
+
+  <main class="content" style="padding: 8px;">
+    <div class="panel plan-panel">
+      <!-- ===== ЛЕВАЯ ПАНЕЛЬ: Фильтры + Таблица ===== -->
+      <div class="table-panel">
+        <!-- Блок фильтров -->
+<div class="filter-section">
+  <!-- ЛЕВАЯ КОЛОНКА: все строки фильтров -->
+  <div class="filter-fields">
+    <div class="filter-row">
+      <label class="filter-label">Год плана:</label>
+      <input type="text" id="fltGod" class="filter-input" placeholder="2026" value="2026">
+      <button class="filter-clear" id="btnClearGod">×</button>
+    </div>
+    <div class="filter-row">
+      <label class="filter-label">№ чертежа:</label>
+      <input type="text" id="fltNomer" class="filter-input" placeholder="Поиск...">
+      <button class="filter-clear" id="btnClearNomer">×</button>
+    </div>
+    <div class="filter-row">
+      <label class="filter-label">Наименование:</label>
+      <input type="text" id="fltNaim" class="filter-input" placeholder="Поиск...">
+      <button class="filter-clear" id="btnClearNaim">×</button>
+    </div>
+    <div class="filter-row">
+      <label class="filter-label">Авто/Моб/Дет:</label>
+      <input type="text" id="fltAvto" class="filter-input" placeholder="Поиск...">
+      <button class="filter-clear" id="btnClearAvto">×</button>
+    </div>
+    <div class="filter-row">
+      <label class="filter-label">Фирма:</label>
+      <select id="fltFirma" class="filter-input">
+        <option value="">Все фирмы</option>
+        <option value="F_20260708023424_68859">АО "АВТОВАЗ"</option>
+        <!-- остальные option -->
+      </select>
+      <button class="filter-clear" id="btnClearFirma">×</button>
+    </div>
+    <!-- t72: фильтр по «№ запроса» — запрос КП, в который включена позиция плана -->
+    <div class="filter-row">
+      <label class="filter-label">№ запроса:</label>
+      <input type="text" id="fltZapros" class="filter-input" placeholder="Поиск...">
+      <button class="filter-clear" id="btnClearZapros">×</button>
+    </div>
+  </div>
+
+  <!-- ПРАВАЯ КОЛОНКА: чекбоксы и кнопка -->
+  <div class="filter-checks">
+    <div class="filter-checkboxes">
+      <label class="filter-chk" title="Нечёткий поиск (Кир→Лат): буквы-двойники кириллицы и латиницы считаются одинаковыми (А=A, В=B, Е=E, Р=P…). Пример: запрос «швеллер» находит «ШBEЛЛЕР», где B, E, P набраны латиницей. Снимите флажок для строгого сравнения."><input type="checkbox" id="fltHG" checked> Кир→Лат</label>
+      <label class="filter-chk"><input type="checkbox" id="fltTO"> ТО</label>
+      <label class="filter-chk"><input type="checkbox" id="fltPPD"> ППД</label>
+      <label class="filter-chk"><input type="checkbox" id="fltTisn"> Тиснение</label>
+      <label class="filter-chk"><input type="checkbox" id="fltPokr"> Покрытие</label>
+      <label class="filter-chk"><input type="checkbox" id="fltTONA"> TONA</label>
+      <button class="btn btn-sm" id="btnClearAllFilters">Сбросить все</button>
+    </div>
+  </div>
+</div>
+
+        <!-- Toolbar таблицы -->
+        <div class="toolbar">
+            <h3 class="table-title">План производства <span class="hint">клик по заголовку — новая запись</span></h3>
+            <div class="toolbar-btns">
+                <button class="btn btn-primary" id="btnPlanAdd" data-crud="add" title="Добавить" disabled>➕</button>
+                <button class="btn btn-success" id="btnPlanSave" data-crud="save" title="Сохранить" disabled>💾</button>
+                <button class="btn btn-danger"  id="btnPlanDel" data-crud="del" title="Удалить" disabled>✖</button>
+                <button id="btnPlanPaste" title="Вставить из буфера (Excel)">📋</button>
+                <button class="btn" id="btnEditGrafik" title="Редактировать график" disabled>📊 График</button>
+
+              </div>
+        </div>
+
+        <!-- Виртуальная таблица -->
+        <div id="planTable" class="vtable-container"></div>
+      </div>
+
+      <!-- Вертикальный ресайз -->
+      <div class="resizer"></div>
+
+      <!-- ===== ПРАВАЯ ПАНЕЛЬ: Форма ===== -->
+      <div class="form-panel form-wide">
+        <h4 id="planFormTitle">Позиция годового плана</h4>
+
+        <!-- Порядок чтения: сначала выбор детали, затем её параметры.
+             Короткие поля (год, кол-во, даты) не растягиваются —
+             ширина по содержимому (см. <style> в <head>). -->
+        <fieldset>
+          <legend>Основные данные</legend>
+
+          <!-- Строка 1: главный выбор — деталь на всю ширину -->
+          <div class="compact-row">
+            <label class="fld-full">Деталь (оснастка) *
+              <!-- ✅ VirtualSelect: контейнер вместо нативного select.
+                   Экземпляр создаётся в CrudModule._loadSelectOptions
+                   (plan.config.js: поле id_osnastka, virtualSelect: true).
+                   Контейнер проксирует .value и событие change —
+                   FormStateManager работает без изменений. -->
+              <div id="pOsnastka"></div>
+            </label>
+          </div>
+
+          <!-- Строка 2: короткие числовые поля -->
+          <div class="compact-row row-next">
+            <label class="fld-year">Год плана *
+              <input id="pGod" type="text" placeholder="2026" maxlength="4">
+            </label>
+            <label class="fld-qty">План кол-во *
+              <input id="pPlanKolvo" type="text" maxlength="6">
+            </label>
+            <label class="fld-money">Цена ПТО, ₽
+              <input id="pCenaPTO" type="text">
+            </label>
+            <label class="fld-money">Стоимость заготовки, ₽
+              <input id="pStoimZagot" type="text">
+            </label>
+          </div>
+        </fieldset>
+
+        <!-- Информация о выбранной детали (read-only) -->
+        <fieldset>
+          <legend>Информация о детали</legend>
+          <div class="info-grid">
+            <div class="info-row">
+              <span class="info-label">№ чертежа:</span>
+              <span id="infoNomerChertezha" class="info-value">—</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Наименование:</span>
+              <span id="infoNaimenovanie" class="info-value">—</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Фирма:</span>
+              <span id="infoFirma" class="info-value">Не определена</span>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Заказ и сроки</legend>
+          <div class="compact-row">
+            <label class="fld-num">№ заказа ПТО
+              <input id="pZakPTO" type="text">
+            </label>
+            <label class="fld-date">Дата заказа
+              <input id="pDataZak" type="date">
+            </label>
+            <label class="fld-date">Дата обеспеч. заготовкой
+              <input id="pDataYesZagot" type="date">
+            </label>
+            <label class="fld-date">План. срок изготовления
+              <input id="pPlanIzgot" type="date">
+            </label>
+            <label class="fld-qty">Кол-во факт. закрыто
+              <input id="pKolFaktGot" type="text" maxlength="6">
+            </label>
+            <label class="fld-status">Статус позиции
+              <input id="pStatPoz" type="text">
+            </label>
+          </div>
+
+          <!-- Цех затрат — отдельной строкой на всю ширину: названия цехов
+               длинные («12 — Заготовительный») -->
+          <div class="compact-row row-next">
+            <label class="fld-full">Цех затрат
+              <select id="pCexZatrat">
+                <option value="">—</option>
+              </select>
+            </label>
+          </div>
+        </fieldset>
+
+        <!-- Дополнительно -->
+        <fieldset>
+          <legend>Дополнительно</legend>
+          <div class="compact-row">
+            <label class="fld-grow">Наим. осн. детали заказа
+              <input id="pNNazvOsnovnDet" type="text">
+            </label>
+            <label class="fld-peredel">Передел
+              <input id="pPeredel" type="text" readonly placeholder="Автоматически">
+            </label>
+            <label class="fld-full">Примечание
+              <input id="pPrimechanie" type="text">
+            </label>
+          </div>
+        </fieldset>
+        <div id="planServiceInfo" style="display: none;"></div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script type="module" src="../js/app-plan.js"></script>
+</body>
+</html>

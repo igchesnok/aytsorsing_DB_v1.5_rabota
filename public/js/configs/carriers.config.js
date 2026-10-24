@@ -1,0 +1,82 @@
+// ============================================================
+// КОНФИГ: Перевозчики — единый источник истины
+// ============================================================
+export default {
+  entity: 'perevozchik',
+  apiUrl: '/api/perevozchik',
+  idKey: 'id',
+  tableTitle: 'Данные перевозчика',
+  wsSync: true,
+
+  fields: [
+    {
+      key: 'gos_n',
+      label: 'Гос. номер',
+      domId: 'cGosN',
+      type: 'text',
+      required: true,
+      filter: true,
+      filterId: 'fltGosN',
+      table: true,
+      tableWidth: 100,
+    },
+    {
+      key: 'fio_vodit',
+      label: 'ФИО водителя',
+      domId: 'cFIO',
+      type: 'text',
+      required: false,
+      filter: true,
+      filterId: 'fltFIO',
+      table: true,
+      tableWidth: 200,
+    },
+    {
+      key: 'marka_tc',
+      label: 'Марка ТС',
+      domId: 'cMarkaTC',
+      type: 'text',
+      required: false,
+      filter: false,
+      table: true,
+      tableWidth: 120,
+    },
+    {
+      key: 'vodit_ud',
+      label: 'Водит. уд.',
+      domId: 'cVoditUD',
+      type: 'text',
+      required: true,
+      filter: false,
+      table: false,
+    },
+    {
+      key: 'kontakt',
+      label: 'Контакт',
+      domId: 'cKontakt',
+      type: 'text',
+      required: false,
+      filter: false,
+      table: true,
+      tableWidth: 120,
+    },
+    {
+      key: 'firma',
+      label: 'Фирма',
+      domId: 'cFirma',
+      type: 'text',
+      required: true,
+      filter: true,
+      filterId: 'fltFirma',
+      table: true,
+      tableWidth: 150,
+    },
+  ],
+
+  filterClearButtons: [
+    { buttonId: 'btnClearFirma', filterId: 'fltFirma' },
+    { buttonId: 'btnClearGosN',  filterId: 'fltGosN' },
+    { buttonId: 'btnClearFIO',   filterId: 'fltFIO' },
+  ],
+  clearAllFiltersBtn: 'btnClearAllFilters',
+};

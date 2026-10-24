@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Управление пользователями</title>
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="../tab.css">
+  <link rel="stylesheet" href="../resizer.css">
+  <style>
+    /* Цветовая индикация ролей */
+    .role-admin { background: #ffe0e0; color: #b00020; font-weight: 600; }
+    .role-pto { background: #e0f0ff; color: #0969da; font-weight: 600; }
+    .role-teholog { background: #e0ffe0; color: #1a7f37; font-weight: 600; }
+    .role-logist { background: #fff0e0; color: #bf8700; font-weight: 600; }
+    .role-viewer { background: #f0f0f0; color: #656d76; }
+    
+    /* Статус активности */
+    .status-active { color: #1a7f37; font-weight: 600; }
+    .status-inactive { color: #cf222e; font-weight: 600; }
+    
+    /* Блок логов */
+    .logs-panel {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    
+    .log-action {
+      font-family: 'Consolas', monospace;
+      font-size: 11px;
+    }
+    
+    .log-action-login { color: #1a7f37; }
+    .log-action-logout { color: #656d76; }
+    .log-action-user_register { color: #0969da; }
+    .log-action-user_update { color: #bf8700; }
+    .log-action-user_delete { color: #cf222e; }
+    .log-action-password_change { color: #8250df; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <h1>👥 Управление пользователями</h1>
+      <div id="toast" class="toast hidden"></div>
+      <div id="wsStatus" class="ws-status disconnected">⚫ Offline</div>
+    </header>
+    
+    <!-- ВКЛАДКИ -->
+    <nav class="tabs">
+      <button class="tab active" data-tab="tabUsers">👤 Пользователи</button>
+      <button class="tab" data-tab="tabLogs">📋 Логи действий</button>
+    </nav>
+    
+    <main class="content" style="padding: 8px;">
+      <!-- ============ ВКЛАДКА: ПОЛЬЗОВАТЕЛИ ============ -->
+      <section id="tabUsers" class="tab-content active">
+        <div class="panel vertikal">
+          
+          <!-- ЛЕВАЯ ПАНЕЛЬ: Таблица пользователей -->
+          <div class="table-panel">
+            <div class="filter-section">
+              <div class="filter-row">
+                <label class="filter-label">Логин:</label>
+                <input type="text" id="fltLogin" class="filter-input" placeholder="Поиск...">
+                <button class="filter-clear" id="btnClearLogin">×</button>
+              </div>
+              <div class="filter-row">
+                <label class="filter-label">ФИО:</label>
+                <input type="text" id="fltFio" class="filter-input" placeholder="Поиск...">
+                <button class="filter-clear" id="btnClearFio">×</button>
+              </div>
+              <div class="filter-row">
+                <label class="filter-label">Роль:</label>
+                <select id="fltRole" class="filter-input">
+                  <option value="">Все роли</option>
+                  <option value="admin">Администратор</option>
+                  <option value="pto">ПТО</option>
+                  <option value="teholog">Технолог</option>
+                  <option value="logist">Логист</option>
+                  <option value="viewer">Только просмотр</option>
+                </select>
+                <button class="filter-clear" id="btnClearRole">×</button>
+              </div>
+              <div class="filter-row">
+                <label class="filter-label">Активность:</label>
+                <select id="fltAktiv" class="filter-input">
+                  <option value="">Все</option>
+                  <option value="1">Активные</option>
+                  <option value="0">Неактивные</option>
+                </select>
+              </div>
+              <button class="btn btn-sm" id="btnClearAllFilters">Сбросить все фильтры</button>
+            </div>
+            
+            <div class="toolbar">
+              <h3 class="table-title">Пользователи <span class="hint">клик по заголовку — новый пользователь</span></h3>
+              <div class="toolbar-btns">
+                <button class="btn btn-primary" id="btnUserAdd" title="Добавить" disabled>➕</button>
+                <button class="btn btn-success" id="btnUserSave" title="Сохранить" disabled>💾</button>
+                <button class="btn btn-danger" id="btnUserDel" title="Удалить" disabled>✖</button>
+              </div>
+            </div>
+            
+            <div id="usersTable" class="vtable-container"></div>
+          </div>
+          
+          <!-- Вертикальный ресайзер -->
+          <div class="resizer"></div>
+          
+          <!-- ПРАВАЯ ПАНЕЛЬ: Форма редактирования -->
+          <div class="form-panel form-wide">
+            <h4 id="userFormTitle">Новый пользователь</h4>
+            
+            <fieldset>
+              <legend>Учётная запись</legend>
+              <div class="form-grid cols-2">
+                <label>Логин *
+                  <input id="uLogin" type="text" placeholder="ivanov.ii">
+                  <span id="loginHint" class="hint"></span>
+                </label>
+                <label>Роль *
+                  <select id="uRole">
+                    <option value="">— выберите роль —</option>
+                    <option value="admin">👑 Администратор</option>
+                    <option value="pto">📋 ПТО</option>
+                    <option value="teholog">👨‍🔬 Технолог</option>
+                    <option value="logist">🚛 Логист</option>
+                    <option value="viewer">👁 Только просмотр</option>
+                  </select>
+                </label>
+              </div>
+              <div class="form-grid">
+                <label style="grid-column: 1/-1">ФИО *
+                  <input id="uFio" type="text" placeholder="Иванов Иван Иванович">
+                </label>
+              </div>
+              <div class="form-grid" style="margin-top: 6px;">
+                <label class="chk">
+                  <input id="uAktiv" type="checkbox" checked> Активен
+                </label>
+              </div>
+            </fieldset>
+            
+            <fieldset>
+              <legend>Пароль</legend>
+              <div class="form-grid cols-2">
+                <label>Новый пароль
+                  <input id="uPassword" type="password" placeholder="Оставьте пустым, чтобы не менять">
+                </label>
+                <label>Подтверждение
+                  <input id="uPassword2" type="password" placeholder="Повторите пароль">
+                  <span id="passwordHint" class="hint"></span>
+                </label>
+              </div>
+              <div style="margin-top: 6px;">
+                <button class="btn btn-sm" id="btnChangePassword" disabled>🔑 Сменить пароль</button>
+              </div>
+            </fieldset>
+            
+            <fieldset>
+              <legend>Информация</legend>
+              <div class="info-grid" style="font-size: 11px; color: var(--muted);">
+                <div>📅 Создан: <span id="infoCreated">—</span></div>
+                <div>🕐 Последний вход: <span id="infoLastLogin">—</span></div>
+              </div>
+            </fieldset>
+            
+            <fieldset>
+              <legend>Описание ролей</legend>
+              <div style="font-size: 11px; line-height: 1.6;">
+                <div class="role-admin" style="padding: 2px 6px; border-radius: 3px; display: inline-block; margin-right: 6px;">👑 Администратор</div>
+                — полный доступ, управление пользователями<br>
+                <div class="role-pto" style="padding: 2px 6px; border-radius: 3px; display: inline-block; margin-right: 6px;">📋 ПТО</div>
+                — все задачи производства<br>
+                <div class="role-teholog" style="padding: 2px 6px; border-radius: 3px; display: inline-block; margin-right: 6px;">👨‍🔬 Технолог</div>
+                — план, маршрут, оснастка, КП<br>
+                <div class="role-logist" style="padding: 2px 6px; border-radius: 3px; display: inline-block; margin-right: 6px;">🚛 Логист</div>
+                — перевозки, транспортные операции<br>
+                <div class="role-viewer" style="padding: 2px 6px; border-radius: 3px; display: inline-block; margin-right: 6px;">👁 Только просмотр</div>
+                — просмотр без редактирования
+              </div>
+            </fieldset>
+          </div>
+        </div>
+      </section>
+      
+      <!-- ============ ВКЛАДКА: ЛОГИ ДЕЙСТВИЙ ============ -->
+      <section id="tabLogs" class="tab-content">
+        <div class="panel gorizont">
+          <main class="content" style="padding: 0;">
+            <div class="logs-panel" style="flex: 1; display: flex; flex-direction: column;">
+              <div class="toolbar">
+                <h3 class="table-title">📋 Логи действий пользователей</h3>
+                <div class="toolbar-btns">
+                  <button class="btn" id="btnRefreshLogs">🔄 Обновить</button>
+                  <select id="fltLogAction" style="padding: 4px 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 12px;">
+                    <option value="">Все действия</option>
+                    <option value="login">Вход</option>
+                    <option value="logout">Выход</option>
+                    <option value="user_register">Регистрация</option>
+                    <option value="user_update">Редактирование</option>
+                    <option value="user_delete">Удаление</option>
+                    <option value="password_change">Смена пароля</option>
+                  </select>
+                </div>
+              </div>
+              <div id="logsTable" class="vtable-container"></div>
+            </div>
+          </main>
+        </div>
+      </section>
+    </main>
+  </div>
+  <script type="module" src="../js/app-users.js"></script>
+</body>
+</html>

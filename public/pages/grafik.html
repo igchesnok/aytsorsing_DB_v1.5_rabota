@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>График изготовления</title>
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="../grafik-resizer.css">
+   <link rel="stylesheet" href="../grafik.css">
+  <style>
+    /* Панель серверной фильтрации (наименование / номер чертежа) */
+    .grafik-filterbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 6px 10px;
+      margin-bottom: 4px;
+    }
+    .grafik-filter-input {
+      padding: 4px 8px;
+      border: 1px solid #c0c8d0;
+      border-radius: 4px;
+      font-size: 13px;
+      min-width: 200px;
+    }
+    .grafik-filter-input:focus {
+      outline: none;
+      border-color: #4a90d9;
+      box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.2);
+    }
+    .grafik-filter-info {
+      font-size: 12px;
+      color: #667;
+      margin-left: auto;
+      white-space: nowrap;
+    }
+  </style>
+  
+</head>
+<body>
+<div class="app">
+  <header class="app-header">
+    <h1>📅 График изготовления</h1>
+    <div id="toast" class="toast hidden"></div>
+    <div id="wsStatus" class="ws-status disconnected">⚫ Offline</div>
+  </header>
+
+  <main class="content grafik-content">
+    <!-- Панель управления -->
+    <div class="grafik-toolbar">
+      <div class="grafik-toolbar-left">
+        <label class="grafik-label">Год:
+          <span id="gBaseYear" class="grafik-year">2026</span>
+          <button class="grafik-spin" id="gYearDown">▼</button>
+          <button class="grafik-spin" id="gYearUp">▲</button>
+        </label>
+        <label class="grafik-label">Доп. мес.:
+          <span id="gExtraMonths" class="grafik-year">3</span>
+          <button class="grafik-spin" id="gExtraDown">▼</button>
+          <button class="grafik-spin" id="gExtraUp">▲</button>
+        </label>
+      </div>
+      <div class="grafik-toolbar-right">
+        <button class="btn" id="gRefresh">🔄 Обновить</button>
+        <button class="btn btn-success" id="gSave" disabled>💾 Сохранить</button>
+      </div>
+    </div>
+
+    <!-- Панель серверной фильтрации: наименование и номер чертежа -->
+    <div class="grafik-filterbar">
+      <label class="grafik-label">Наименование:
+        <input type="text" id="gFilterName" class="grafik-filter-input"
+               placeholder="введите часть наименования…" autocomplete="off">
+      </label>
+      <label class="grafik-label">№ чертежа:
+        <input type="text" id="gFilterDrawing" class="grafik-filter-input"
+               placeholder="введите номер чертежа…" autocomplete="off">
+      </label>
+      <button class="btn" id="gFilterReset">✖ Сброс фильтра</button>
+      <span id="gFilterInfo" class="grafik-filter-info"></span>
+    </div>
+
+   <!-- Заголовки годов и месяцев + Диаграмма + Таблица -->
+<div class="grafik-scroll-container">
+  <div class="grafik-scroll-content">
+    <!-- Заголовки годов и месяцев -->
+    <div class="grafik-header-wrap">
+      <div class="grafik-header-fixed">
+        <div class="grafik-col-name">№ и наименование оснастки</div>
+        <div class="grafik-col-firma">Фирма</div>
+        <div class="grafik-col-zak">№ Зак.</div>
+        <div class="grafik-col-sum">Сумма, шт</div>
+        <div class="grafik-col-trud">Труд-ть, н/ч</div>
+      </div>
+      <div class="grafik-header-months" id="gMonthsHeader">
+        <!-- Заполняется JS -->
+      </div>
+    </div>
+
+    <!-- Столбчатая диаграмма -->
+    <div class="grafik-chart-wrap">
+      <div class="grafik-chart-fixed"></div>
+      <div class="grafik-chart-bars" id="gChartBars">
+        <!-- Заполняется JS -->
+      </div>
+    </div>
+
+    <!-- Таблица с данными (только вертикальный скролл) -->
+    <div class="grafik-body" id="gBody">
+      <!-- Заполняется JS -->
+    </div>
+  </div>
+</div>
+
+    <!-- Итоги -->
+    <div class="grafik-totals" id="gTotals">
+      <div class="grafik-total-block base">
+        <div class="grafik-total-cap" id="gTotalBaseCap">2026 год:</div>
+        <div class="grafik-total-val" id="gTotalBase">0.00</div>
+      </div>
+      <div class="grafik-total-block next" id="gTotalNextBlock">
+        <div class="grafik-total-cap" id="gTotalNextCap">2027 год:</div>
+        <div class="grafik-total-val" id="gTotalNext">0.00</div>
+      </div>
+      <div class="grafik-total-block all">
+        <div class="grafik-total-cap">Итого за период:</div>
+        <div class="grafik-total-val" id="gTotalAll">0.00</div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script type="module" src="../js/app-grafik.js"></script>
+</body>
+</html>

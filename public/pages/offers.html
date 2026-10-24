@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Внесение коммерческих предложений</title>
+<link rel="stylesheet" href="../style.css">
+<link rel="stylesheet" href="../resizer.css">
+<link rel="stylesheet" href="../transport-ops.css">
+<style id="soglStepsStyles">
+  /* ✅ T51: панель шагов согласования (эталон — .step-fs orders.html);
+     шаг 1 — СЗ в ЭДО (новый), шаг 2 — «Согл. структур. подр. АВТОВАЗ»
+     (перенесён со страницы «Заказы по договорам») */
+  .sogl-fs { border: 1px solid #c3ccd6; border-radius: 6px; padding: 6px 8px 8px; margin: 0 0 6px; min-width: 0; background: #fafcfe; }
+  .sogl-fs legend { font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; padding: 0 4px; color: #1a2733; }
+  .sogl-badge { display: inline-flex; width: 18px; height: 18px; border-radius: 50%; align-items: center; justify-content: center; color: #fff; font-size: 11px; font-weight: 700; background: #9aa2ad; flex-shrink: 0; }
+  .sogl-badge.done { background: #2e9e44; }
+  .sogl-badge.active { background: #e08a00; }
+  .sogl-fs.blocked { opacity: .55; background: #f2f3f5; }
+  .sogl-row { display: flex; align-items: center; gap: 6px; margin: 4px 0 0; min-width: 0; }
+  .sogl-label { font-size: 11px; color: #5b6773; flex-shrink: 0; min-width: 96px; text-align: right; }
+  .sogl-input { flex: 1; min-width: 0; }
+  .sogl-hint { font-size: 10px; color: #b3541e; margin: 2px 0 0 102px; }
+  /* ✅ T51-c: красный крест «Удалить СЗ» — как .doc-row .doc-del
+     transport-ops.css (вкладка «Документы»), но в строках .sogl-row */
+  .sogl-row .doc-del { color: #d32f2f; font-weight: 700; }
+  .sogl-row .doc-del:hover { background: #fdecea; border-color: #d32f2f; }
+</style>
+<style id="offersPageStyles">
+  /* ✅ T76b (bugfix): структура страницы — по образцам «План перевозок»,
+     «Редактор транспортных операций» (вкладка «Детали») и «Заказы по
+     договорам»: body { height:100vh; overflow:hidden } (база style.css,
+     НЕ переопределяется) → .app 100vh → .panel.gorizont { flex:1 1 0 } —
+     определённая высота спускается по цепочке вложенности, поэтому
+     .panel.vertikal (базовый flex:1 1 0) НЕ схлопывается и штатный
+     ресайзер меняет именно панели. Прокрутка страницы не нужна:
+     таблицы скроллятся внутри .vtable-container, контейнер решения —
+     внутри .decision-body. Высоты блокам задаёт ресайзер (px на
+     nextElementSibling) либо flex — явные vh-высоты из t76 удалены. */
+
+  /* ✅ T76: КОНТЕЙНЕР ПРИНЯТИЯ РЕШЕНИЯ — сворачивается как блок фильтров
+     (t73): шапка видна всегда, контент скрывается целиком, состояние в
+     localStorage (offers_decision_collapsed). Ресайзер #decisionResizer
+     при сворачивании прячется (JS offers-matrix.js). */
+  .decision-block { display: flex; flex-direction: column; flex: 1 1 0; min-height: 0; margin: 2px; padding: 1px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); }
+  /* ✅ T76b: свёрнутый блок — полоска шапки, остаток высоты забирают
+     сводная таблица и верхняя область (как свёрнутые фильтры t73);
+     px-высоту от ресайзера JS сбрасывает при сворачивании */
+  .decision-block.collapsed { flex: 0 0 auto; }
+  /* ✅ T76b-2: автоматический min-size по контенту зажимал сводную
+     панель: VirtualTable задаёт строкам .vtable явную px-высоту, и
+     .table-panel (min-height:auto) не мог сжаться ниже высоты таблицы —
+     сводная давила контейнер решения до нуля (баг «56px против 292px»).
+     Разрешаем сжатие до 0 — как у контейнеров с ресайзерами на образцах
+     («Заказы по договорам»: min-height:0 у обеих панелей); таблица
+     скроллится внутри .vtable-container (min-height:0 по базе). */
+  #kpBottomWrap > .table-panel { min-height: 0; }
+  .decision-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 3px 6px; background: #e6f3ff; border-radius: 4px; margin: 1px; flex: 0 0 auto; }
+  .decision-title { font-size: 12px; font-weight: 600; color: var(--text); user-select: none; white-space: nowrap; }
+  .decision-hint { font-size: 10.5px; color: var(--muted); font-weight: 400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .decision-toggle-btn { flex: 0 0 auto; width: 22px; height: 18px; padding: 0; border: 1px solid var(--border); border-radius: 3px; background: #fff; color: var(--muted); font-size: 10px; line-height: 1; cursor: pointer; }
+  .decision-toggle-btn:hover { background: var(--row-hover); color: var(--text); }
+  .decision-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; }
+  .decision-block.collapsed .decision-body { display: none; }
+</style>
+</head>
+<body>
+<div class="app">
+<header class="app-header">
+<h1>📋 Внесение коммерческих предложений</h1>
+<div id="toast" class="toast hidden"></div>
+<div id="wsStatus" class="ws-status disconnected">⚫ Offline</div>
+</header>
+
+<div class="panel gorizont">
+  <div class="panel vertikal">
+    <div class="table-panel">
+      <div class="filter-section">
+        <div class="filter-row">
+          <label for="fltGod" style="white-space: nowrap;">Год от:</label>
+          <input type="number" id="fltGod" min="1926" max="2026" value="2026" step="1" class="contract-year-input" />
+          <label for="fltGodDo" style="white-space: nowrap;">до:</label>
+          <input type="number" id="fltGodDo" min="1926" max="2026" value="2026" step="1" class="contract-year-input" />
+          <button class="filter-clear" id="btnClearGod">×</button>
+          <label for="fltNoKP" class="filter-chk" style="margin-left: 10px;">
+            <input type="checkbox" id="fltNoKP"> Без КП
+          </label>
+        </div>
+        <div class="filter-row">
+          <label class="filter-label">Запрос КП:</label>
+          <select id="fltZapros" class="filter-input">
+            <option value="">— Выберите запрос —</option>
+          </select>
+        </div>
+        <div class="filter-row">
+          <label class="filter-label">Фирма:</label>
+          <select id="fltFirma" class="filter-input">
+            <option value="">— Выберите фирму —</option>
+          </select>
+        </div>
+        <!-- ✅ T83: блок с data-filters-status модуль filters-collapse.js переносит
+             в шапку .filters-header — статус виден и при свёрнутых фильтрах -->
+        <div data-filters-status title="Статус выбранного запроса КП" style="margin-left: auto; min-width: 0; max-width: 62%; padding: 3px 10px; background: #f6f8fa; border-radius: 4px; font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+          <b>Статус запроса:</b>
+          <span id="lblStatus" style="color: var(--primary); font-weight: 600;">—</span>
+        </div>
+      </div>
+
+    <!-- Toolbar таблицы деталей -->
+    <div class="toolbar">
+      <h3 class="table-title">Детали для КП <span class="hint">клик по заголовку — очистить выбор</span></h3>
+      <div class="toolbar-btns">
+        <button class="btn btn-success" id="btnBestKP" title="Выбрать лучшие КП" disabled>🏆 КП</button>
+        <button class="btn btn-success" id="btnKpSave" title="Сохранить КП" disabled>💾 КП</button>
+        <button class="btn btn-primary" id="btnImportExcel" title="Загрузить данные из Excel файла ТКП" disabled> 📥 из Excel</button>
+      </div>
+    </div>
+
+      <div id="detaliTable" class="vtable-container"></div>
+    </div>
+
+    <div class="resizer"></div>
+
+    <div class="form-panel form-wide">
+      <h4 id="kpFormTitle">Данные коммерческого предложения</h4>
+
+      <!-- ✅ T48: основание от фирмы (PDF) — относится ко ВСЕМ деталям запроса -->
+      <fieldset id="kpOsnovanieFieldset">
+        <legend>Основание от фирмы (PDF)</legend>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <button type="button" class="btn btn-primary" id="btnOsnovanieSelect" title="Выбрать PDF-файл основания, присланного фирмой по этому запросу (документ относится ко всем деталям запроса)" style="white-space: nowrap;">📎 Выбрать документ</button>
+          <input id="kpOsnovanieName" type="text" placeholder="Документ не прикреплён" readonly style="flex: 1 1 auto; min-width: 100px; background: #f6f8fa;" title="Название прикреплённого документа" />
+          <a id="kpOsnovanieLink" href="#" target="_blank" rel="noopener" style="white-space: nowrap; visibility: hidden;" title="Открыть прикреплённый документ">🔗 Открыть</a>
+        </div>
+        <div style="font-size: 11px; color: var(--muted); margin-top: 4px;">
+          Документ относится ко всем деталям выбранного запроса для выбранной фирмы.
+          Хранится на сервере: папка «запросы» → год → номер запроса. Повторный выбор файла заменяет документ.
+        </div>
+        <input type="file" id="kpOsnovanieFile" accept=".pdf,application/pdf" style="display: none;" />
+      </fieldset>
+
+      <fieldset>
+        <legend>Деталь</legend>
+        <div class="info-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 11px;">
+          <div><span style="color: var(--muted);">№ чертежа:</span> <span id="infoNomerChertezha">—</span></div>
+          <div><span style="color: var(--muted);">Наименование:</span> <span id="infoNaimenovanie">—</span></div>
+          <div><span style="color: var(--muted);">План кол-во:</span> <span id="infoPlanKolvo">—</span></div>
+          <div><span style="color: var(--muted);">Фирма:</span> <span id="infoFirma">—</span></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Параметры предложения</legend>
+        <div class="form-grid cols-2">
+          <label>Трудоемкость, н/ч
+            <input id="kpTrudoemkost" type="text" placeholder="10.5">
+          </label>
+          <label>Стоимость детали без НДС, ₽
+            <input id="kpCena" type="text" placeholder="1500">
+          </label>
+          <label>Средн. цена н/ч, ₽
+            <input id="kpCenaNCh" type="text" placeholder="15000" readonly style="background: #f0f0f0;">
+          </label>
+          <label>Мощность, шт
+            <input id="kpMoshchnost" type="text" placeholder="100">
+          </label>
+          <label>Срок выполнения, дн.
+            <input id="kpSrok" type="text" placeholder="30">
+          </label>
+        </div>
+        <div class="form-grid" style="margin-top: 6px;">
+          <label>Тип изготовления
+            <select id="kpTipIzgot">
+              <option value="">— Выберите тип —</option>
+              <option value="ПОЛНЫЙ ЦИКЛ (ТО + МЕХ. ОБРАБОТКА)">ПОЛНЫЙ ЦИКЛ (ТО + МЕХ. ОБРАБОТКА)</option>
+              <option value="ПОЛНАЯ МЕХ ОБРАБОТКА БЕЗ ТО">ПОЛНАЯ МЕХ ОБРАБОТКА БЕЗ ТО</option>
+              <option value="ЧАСТИЧНАЯ МЕХ ОБРАБОТКА С ТО">ЧАСТИЧНАЯ МЕХ ОБРАБОТКА С ТО</option>
+              <option value="ЧАСТИЧНАЯ МЕХ ОБРАБОТКА БЕЗ ТО">ЧАСТИЧНАЯ МЕХ ОБРАБОТКА БЕЗ ТО</option>
+            </select>
+          </label>
+          <label>Договор (для этой позиции)
+            <select id="kpDogovor">
+              <option value="">— Выберите договор —</option>
+            </select>
+          </label>
+        </div>
+      </fieldset>
+
+      <!-- ✅ T19-ISKLYUCHEN: отображение и переключение флага «исключён из расчётов» -->
+      <fieldset id="kpIsklyuchenFieldset" style="display: none;">
+        <legend>Исключение из расчётов</legend>
+        <label class="filter-chk" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+          <input type="checkbox" id="chkKpIsklyuchen">
+          <span>КП исключено из расчётов (не участвует в выборе лучшего)</span>
+        </label>
+        <div style="font-size: 11px; color: var(--muted); margin-top: 4px;">
+          Исключённое КП пропускается при перерасчёте лучших КП и не попадает в заказы.
+          Если оно было назначено лучшим, позиция освобождается, а статус запроса откатывается для перерасчёта.
+        </div>
+      </fieldset>
+
+      <!-- ✅ НОВОЕ: ручное назначение лучшего КП -->
+      <fieldset id="manualBestKpFieldset" style="display: none;">
+        <legend>Назначение лучшего КП вручную</legend>
+        <label class="filter-chk" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+          <input type="checkbox" id="chkManualBestKp">
+          <span>Назначить это КП как лучшее для позиции</span>
+        </label>
+        <div style="font-size: 11px; color: var(--muted); margin-top: 4px;">
+          Сначала будет выполнен сброс текущего лучшего КП (откат цепочки позиции), затем это КП будет назначено лучшим.
+        </div>
+        <!-- ✅ НОВОЕ: обязательный комментарий к ручному назначению -->
+        <div id="manualBestKpCommentBox" style="display: none; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border);">
+          <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">
+            Комментарий <span style="color: #c00;">*</span>
+          </label>
+          <textarea id="manualBestKpComment" rows="2" placeholder="Объясните причину ручного выбора этого КП (обязательно)"
+                    style="width: 100%; font-size: 12px; padding: 4px 6px; box-sizing: border-box; resize: vertical;"></textarea>
+          <div id="manualBestKpCurrentComment" style="font-size: 11px; color: var(--muted); margin-top: 4px; display: none;">
+            <b>Текущий комментарий:</b> <span id="manualBestKpCurrentCommentText">—</span>
+          </div>
+        </div>
+      </fieldset>
+
+    </div>
+  </div>
+
+  <div class="resizer horizontal"></div>
+
+  <!-- ✅ T76b: НИЖНЯЯ ЗОНА — сводная таблица КП + блок принятия решения
+       в собственном .panel.gorizont. Образец вложенности — «Заказы по
+       договорам» (вложенный .panel gorizont с ресайзером внутри) и
+       «План перевозок». Штатный ресайзер (js/common/resizer.js) меняет
+       высоту СЛЕДУЮЩЕГО за ним элемента внутри ближайшего .panel:
+       ресайзер №1 (выше) меняет высоту #kpBottomWrap целиком, а верхний
+       .panel.vertikal (flex:1) поглощает остаток; #decisionResizer
+       меняет высоту #decisionBlock внутри зоны, сводная .table-panel
+       (flex:1) поглощает. Так движение каждого ресайзера меняет ровно
+       два соседних блока. -->
+  <div id="kpBottomWrap" class="panel gorizont">
+
+  <div class="table-panel">
+    <div class="toolbar">
+      <h3 class="table-title">Сводная таблица КП</h3>
+      <!-- ✅ НОВОЕ: чекбокс свернуть/развернуть все группы фирм -->
+      <label class="filter-chk" id="lblCollapseAllGroups" style="display: none; cursor: pointer; white-space: nowrap;" title="Свернуть/развернуть все группы фирм">
+        <input type="checkbox" id="chkCollapseAllGroups" checked>
+        <span>Свернуть все группы</span>
+      </label>
+      <button  class="btn btn-primary" id="btnExportSummary" title="Экспорт сводной таблицы в Excel">в Excel</button>
+    </div>
+    <div id="summaryTable" class="vtable-container"></div>
+  </div>
+
+  <!-- ✅ T76: горизонтальный ресайзер между сводной таблицей КП и блоком
+       принятия решения. Штатный .resizer (js/common/resizer.js) работает
+       внутри .panel с flex-direction: column (здесь .panel.gorizont) и
+       меняет высоту СЛЕДУЮЩЕГО за ним элемента — #decisionBlock. -->
+  <div class="resizer horizontal" id="decisionResizer"></div>
+
+  <!-- ✅ T76: КОНТЕЙНЕР ПРИНЯТИЯ РЕШЕНИЯ — матрица выбора поставщика
+       (t74) + диаграмма «Трудоёмкость и стоимость» (t75/t76).
+       Сворачивается кнопкой-треугольником по аналогии с блоком фильтров
+       (t73): шапка видна всегда, контент скрывается целиком, состояние
+       — в localStorage (offers_decision_collapsed). Заполняется модулем
+       js/modules/offers-matrix.js вместе со сводной таблицей. -->
+  <div class="decision-block" id="decisionBlock">
+    <div class="decision-header">
+      <span class="decision-title">Принятие решения</span>
+      <span class="decision-hint">чекбоксы строк — предложения позиции на диаграмме (цвет — фирма, номер — в символе); чекбокс ИТОГО — итоги на диаграмме; «не допускается разбивать партию» — требование запроса (комплект)</span>
+      <button class="decision-toggle-btn" id="btnDecisionToggle" title="Свернуть/развернуть блок принятия решения">▲</button>
+    </div>
+    <div class="decision-body" id="decisionBody">
+
+    <!-- ✅ T74: «Матрица выбора поставщика» — визуализация сводной КП
+         (строки = позиции, колонки = только фирмы с предложениями;
+         ячейка = стоимость партии на зелёно-красной шкале + трудоёмкость
+         + тип; ★ — минимальная стоимость; строка ИТОГО с мини-барами;
+         наведение — параметры КП, клик — карточка КП).
+         Заполняется модулем js/modules/offers-matrix.js вместе со сводной
+         таблицей (данные — те же Offers._allKP, без запросов к серверу). -->
+    <div id="matrixWrap" style="display: none;">
+      <div class="toolbar">
+        <h3 class="table-title">Матрица выбора поставщика
+          <span class="hint">зелёное — дешевле, красное — дороже (шкала цены за деталь по строке); ★ — фирмы-победители; строки одного чертежа объединены; чекбоксы — позиции и итоги на диаграмме</span>
+        </h3>
+      </div>
+      <div id="choiceMatrix" class="kp-mx-container"></div>
+    </div>
+
+    <!-- ✅ T75/T78/T79: ДИАГРАММА «СТОИМОСТЬ И ТРУДОЁМКОСТЬ ПАРТИИ» —
+         заполняется модулем js/modules/offers-matrix.js вместе с матрицей.
+         По отмеченным чекбоксами позициям: тёмный ромб — целевая стоимость
+         позиции, круги — ВСЕ предложения (цвет — фирма, в символе — №
+         позиции, тёмная обводка — победитель); итоги (◆ Цель, ⭑ Лучшее
+         предложение) — чекбокс в строке ИТОГО. Интерактив: колесо —
+         масштаб с ПЕРЕСЧЁТОМ сетки (маркеры постоянного размера,
+         перекрытые точки расходятся), перетаскивание — сдвиг, двойной
+         клик — сброс. Наведение — параметры, клик по предложению —
+         карточка КП. -->
+    <div id="scatterWrap" style="display: none;">
+      <div class="toolbar">
+        <h3 class="table-title"><span id="kpScatterTitleText">Трудоёмкость и стоимость по фирмам</span>
+          <span class="hint">X — трудоёмкость партии (н/ч), Y — стоимость партии (₽); ниже и левее — выгоднее; колесо — масштаб с пересчётом сетки (маркеры постоянного размера), перетаскивание — сдвиг, двойной клик — сброс; чекбоксы в матрице — позиции и итоги на диаграмме; цвет маркера — фирма (и её название в легенде), в символе — № позиции; перекрестия — со значениями линий у осей; наведение на предложение — перекрестие и подсветка промежутка до цели (салатовый — дешевле цели, розовый — дороже); чекбокс «только лучшие предложения» — оставляет победителей; наведение на предложение в матрице подсвечивает его точку на диаграмме (синхронизация), и наоборот; кнопка ⛶ — диаграмма во весь экран (Esc — выход)</span>
+        </h3>
+        <div class="toolbar-btns" id="kpScatterCtrls">
+          <!-- ✅ T78: селект режима заменён чекбоксами в строках матрицы;
+               кнопка сбрасывает масштаб и сдвиг диаграммы -->
+          <button class="btn btn-sm" id="btnScatterFull" title="Открыть диаграмму во весь экран (Esc — выход)">⛶ Во весь экран</button>
+          <button class="btn btn-sm" id="btnScatterReset" title="Сбросить масштаб и сдвиг диаграммы">⟲ Сброс</button>
+          <label class="filter-chk" id="lblNoSplit" title="Требование запроса «все позиции изготавливаются комплектом» — хранится в карточке запроса (zapros_kp.komplekt) и сохраняется при переключении. Отмечено — партия заказывается у одной фирмы: итоги по фирмам считаются по всем позициям, «Лучшее предложение» — предложение фирмы-победителя на всю партию. Снято — партия может быть разбита по мощности фирм: «Лучшее предложение» — лучшая комбинация по позициям от разных фирм">
+            <input type="checkbox" id="chkNoSplitBatch" checked> не допускается разбивать партию
+          </label>
+          <!-- ✅ T80: фильтр «только лучшие предложения» — оставляет на диаграмме
+               предложения-победители по позициям С УЧЁТОМ требования «не
+               допускается разбивать партию»: при «комплекте» — предложение
+               фирмы-победителя на всю партию, иначе — фирмы-победительницы
+               лучшей комбинации (разделение по мощности) -->
+          <label class="filter-chk" id="lblBestOnly" title="Показать только лучшие предложения по позициям: при требовании «не допускается разбивать партию» — предложение фирмы-победителя на всю партию; иначе — предложения фирм-победительниц лучшей комбинации (разделение по мощности). Остальные предложения скрываются">
+            <input type="checkbox" id="chkBestOnly"> только лучшие предложения
+          </label>
+        </div>
+      </div>
+      <div id="kpScatter" class="kp-sc-container"></div>
+    </div>
+    </div>
+  </div>
+  </div>
+
+    <!-- ✅ T51 (T51-c): ШАГИ СОГЛАСОВАНИЯ ЗАКАЗА ПО ЗАПРОСУ — ПОД СВОДНОЙ
+         ТАБЛИЦЕЙ (перенесены из блока фильтров — так логичнее: шаги
+         относятся к результату сводной таблицы).
+         Шаг 1 — «СЗ в ЭДО»: письмо согласования заказа (тема настраивается
+         на странице «Настройки ЭДО» — config/edo.json, tema.sz_soglasovanie)
+         (Редактор транспортных операций → Документы): предпросмотр текста
+         из лучших КП → правка в модальном окне → создание на портале;
+         № СЗ и № письма ЭДО сохраняются в zapros_kp.
+         Кнопки строки — КАК НА ВКЛАДКЕ «ДОКУМЕНТЫ»: Создать / Ред. /
+         красный крест «Удалить» (минимальные подписи, полные — в
+         подсказках при наведении).
+         Шаг 2 — «Согл. структур. подр. АВТОВАЗ» — перенесён со страницы
+         «Заказы по договорам» (там был шаг 3): согласование привязано
+         к запросу КП, а не к заказу. -->
+    <div id="soglStepsPanel">
+      <fieldset class="sogl-fs" id="soglStep1">
+        <legend><span class="sogl-badge" id="soglBadge1">1</span> СЗ в ЭДО — согласование заказа</legend>
+        <div class="sogl-row">
+          <label class="sogl-label">№ СЗ:</label>
+          <input id="soglNomer" class="sogl-input" placeholder="не создана (можно ввести вручную)">
+          <button class="btn btn-sm" id="btnCreateSzSoglas" title="Создать СЗ согласования в системе ЭДО (тема — из настроек ЭДО; текст письма — правка в модальном окне; вложения — сводная таблица, запрос Excel, основания фирм)">Создать</button>
+          <button class="btn btn-sm" id="btnEditSzSoglas" title="Редактировать текст письма СЗ согласования на портале (модальное окно)">Ред.</button>
+          <button class="btn btn-sm doc-del" id="btnDelSzSoglas" title="Удалить СЗ">✖</button>
+        </div>
+        <div class="sogl-hint" id="soglHint1" style="display:none;"></div>
+      </fieldset>
+      <fieldset class="sogl-fs blocked" id="soglStep2">
+        <legend><span class="sogl-badge" id="soglBadge2">2</span> Согл. структур. подр. АВТОВАЗ</legend>
+        <div class="sogl-row">
+          <label class="sogl-label">№ письма ЭДО:</label>
+          <input id="soglEdo" class="sogl-input">
+          <button class="btn btn-sm" id="btnSoglasEdoGo" title="Открыть письмо согласования (СЗ шага 1) на сайте ЭДО (docs.vaz.ru) в Яндекс Браузере">Перейти в ЭДО</button>
+        </div>
+        <div class="sogl-row">
+          <label class="sogl-label">Решение УЗБ:</label>
+          <select id="soglUzb" class="sogl-input">
+            <option value="">не прорабатывался</option>
+            <option value="согласовано">согласовано</option>
+            <option value="отказ">отказ</option>
+          </select>
+        </div>
+        <div class="sogl-hint" id="soglHint2" style="display:none;"></div>
+      </fieldset>
+    </div>
+</div>
+</div>
+<input type="file" id="excelFileInput" accept=".xlsx, .xls" style="display: none;" />
+
+<!-- ✅ T51: модальное окно WYSIWYG предпросмотра/правки текста письма
+     согласования (эталон — szLetterModal transport-ops.html, T39-C/T43) -->
+<div id="szSoglasModal" class="poz-params-overlay hidden">
+  <div class="poz-params-window" style="width: 760px;">
+    <h3>Текст письма согласования</h3>
+    <p class="poz-params-info" id="szSoglasInfo">—</p>
+    <div id="szSoglasToolbar" style="display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px;">
+      <button type="button" class="szl-btn" data-cmd="bold" title="Полужирный (Ctrl+B)"><b>B</b></button>
+      <button type="button" class="szl-btn" data-cmd="italic" title="Курсив (Ctrl+I)"><i>I</i></button>
+      <button type="button" class="szl-btn" data-cmd="underline" title="Подчёркнутый (Ctrl+U)"><u>U</u></button>
+      <button type="button" class="szl-btn" data-cmd="strikeThrough" title="Зачёркнутый"><s>S</s></button>
+      <button type="button" class="szl-btn" data-cmd="undo" title="Отменить">↶</button>
+      <button type="button" class="szl-btn" data-cmd="redo" title="Повторить">↷</button>
+      <button type="button" class="szl-btn" data-cmd="removeFormat" title="Убрать форматирование в выделении">убрать формат</button>
+      <button type="button" class="szl-btn" id="szSoglasSourceBtn" title="Режим HTML-тегов">HTML</button>
+    </div>
+    <div id="szSoglasEditor" contenteditable="true" style="width: 100%; box-sizing: border-box; height: 360px; overflow-y: auto; resize: vertical; border: 1px solid #c8d0d8; border-radius: 6px; padding: 10px 12px; background: #fff; font-size: 14px; line-height: 1.35; outline: none;"></div>
+    <textarea id="szSoglasText" hidden style="width: 100%; box-sizing: border-box; height: 360px; resize: vertical; font-family: Consolas, 'Courier New', monospace; font-size: 12.5px; white-space: pre-wrap; border: 1px solid #c8d0d8; border-radius: 6px; padding: 8px;"></textarea>
+    <p class="poz-params-hint">Тема письма берётся из настроек ЭДО (кнопка меню «⚙️ Настройки ЭДО»); тело собирается из лучших КП запроса и правится визуально, как в Word/RTF. Кнопка «HTML» показывает исходную разметку.</p>
+    <div class="poz-params-actions">
+      <!-- ✅ T51-c: две кнопки действия — «Создать» видна в предпросмотре
+           нового письма (шаг 1 «Создать»), «Сохранить на портал» — в
+           режиме редактирования существующей СЗ («Ред.»), как в
+           szLetterModal transport-ops.html (T43/T44) -->
+      <button class="btn btn-sm btn-success" id="szSoglasCreate">📤 Создать СЗ в ЭДО</button>
+      <button class="btn btn-sm btn-success" id="szSoglasSave" style="display: none;">💾 Сохранить на портал</button>
+      <button class="btn btn-sm" id="szSoglasCancel">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="../js/app-offers.js"></script>
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Перевозчики</title>
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="../resizer.css">
+</head>
+<body>
+<div class="app">
+  <header class="app-header">
+    <h1>🚛 Перевозчики</h1>
+    <div id="toast" class="toast hidden"></div>
+    <div id="wsStatus" class="ws-status disconnected">⚫ Offline</div>
+  </header>
+
+  <main class="content" style="padding: 8px;">
+    <div class="panel osnastka-panel">
+      <!-- ===== ЛЕВАЯ ПАНЕЛЬ: Фильтры + Таблица ===== -->
+      <div class="table-panel">
+        <!-- Блок фильтров (аналог txtFilterFirma, txtFilterGosN, txtFilterFIO) -->
+        <div class="filter-section">
+          <div class="filter-row">
+            <label class="filter-label">Фирма:</label>
+            <input type="text" id="fltFirma" class="filter-input" placeholder="Поиск...">
+            <button class="filter-clear" id="btnClearFirma" title="Очистить">×</button>
+          </div>
+          <div class="filter-row">
+            <label class="filter-label">Гос. номер:</label>
+            <input type="text" id="fltGosN" class="filter-input" placeholder="Поиск...">
+            <button class="filter-clear" id="btnClearGosN" title="Очистить">×</button>
+          </div>
+          <div class="filter-row">
+            <label class="filter-label">ФИО водителя:</label>
+            <input type="text" id="fltFIO" class="filter-input" placeholder="Поиск...">
+            <button class="filter-clear" id="btnClearFIO" title="Очистить">×</button>
+          </div>
+          <button class="btn btn-sm" id="btnClearAllFilters">Сбросить все фильтры</button>
+        </div>
+
+        <!-- Toolbar таблицы -->
+        <div class="toolbar">
+          <h3 class="table-title">Перевозчики <span class="hint">клик по заголовку — новая запись</span></h3>
+          <div class="toolbar-btns">
+              <button class="btn btn-primary" id="btnCarriersAdd"  data-crud="add"  title="Добавить" disabled>➕</button>
+              <button class="btn btn-success" id="btnCarriersSave" data-crud="save" title="Сохранить" disabled>💾</button>
+              <button class="btn btn-danger"  id="btnCarriersDel"  data-crud="del"  title="Удалить" disabled>✖</button>
+              <button id="btnCarriersPaste">📋</button>
+            </div>
+        </div>
+
+        <!-- Виртуальная таблица -->
+        <div id="carriersTable" class="vtable-container"></div>
+      </div>
+
+      <!-- Вертикальный ресайз -->
+      <div class="resizer"></div>
+
+      <!-- ===== ПРАВАЯ ПАНЕЛЬ: Форма ===== -->
+      <div class="form-panel form-wide">
+        <h4 id="carriersFormTitle">Данные перевозчика</h4>
+        <fieldset>
+          <legend>Транспортное средство</legend>
+          <div class="form-grid cols-2">
+            <label>Марка ТС
+              <input id="cMarkaTC" type="text" placeholder="КАМАЗ 65115">
+            </label>
+            <label>Гос. номер *
+              <input id="cGosN" type="text" placeholder="А123БВ777">
+            </label>
+          </div>
+        </fieldset>
+        
+        <fieldset>
+          <legend>Водитель</legend>
+          <div class="form-grid cols-2">
+            <label>ФИО водителя
+              <input id="cFIO" type="text" placeholder="Иванов Иван Иванович">
+            </label>
+            <label>Водит. уд. *
+              <input id="cVoditUD" type="text" placeholder="77 АА 123456">
+            </label>
+            <label style="grid-column: 1/-1">Контакт (тел.)
+              <input id="cKontakt" type="text" placeholder="+7 (999) 123-45-67">
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Организация</legend>
+          <div class="form-grid">
+            <label style="grid-column: 1/-1">Фирма *
+              <input id="cFirma" type="text" placeholder="ООО 'Логистика'">
+            </label>
+          </div>
+        </fieldset>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script type="module" src="../js/app-carriers.js"></script>
+</body>
+</html>

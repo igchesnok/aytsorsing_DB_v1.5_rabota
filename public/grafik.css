@@ -1,0 +1,490 @@
+/* ============================================================
+   ГРАФИК ИЗГОТОВЛЕНИЯ
+   ============================================================ */
+.grafik-content {
+  display: flex;
+  flex-direction: column;
+  padding: 0 !important;
+  overflow: hidden;
+}
+
+.grafik-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #f6f8fa;
+  border-bottom: 1px solid var(--border);
+}
+.grafik-toolbar-left, .grafik-toolbar-right {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.grafik-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.grafik-year {
+  display: inline-block;
+  min-width: 40px;
+  text-align: center;
+  font-weight: bold;
+  font-size: 14px;
+  color: var(--primary);
+}
+.grafik-spin {
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  background: #fff;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 10px;
+  line-height: 1;
+}
+.grafik-spin:hover { background: var(--row-hover); }
+
+/* Заголовки */
+.grafik-header-wrap {
+  display: flex;
+  border-bottom: 2px solid var(--border);
+  background: #f6f8fa;
+  flex-shrink: 0;
+}
+.grafik-header-fixed {
+  display: flex;
+  flex-shrink: 0;
+  border-right: 1px solid var(--border);
+}
+.grafik-col-name {
+  padding: 4px 8px;
+  font-weight: 600;
+  font-size: 11px;
+  background: #3c3c3c;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border-right: 1px solid #555;
+}
+.grafik-col-firma { /* t66 */
+  padding: 4px;
+  font-weight: 600;
+  font-size: 11px;
+  background: #6a4fa3;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border-right: 1px solid #523a80;
+}
+.grafik-col-zak {
+  padding: 4px;
+  font-weight: 600;
+  font-size: 11px;
+  background: #0054a6;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border-right: 1px solid #003d7a;
+}
+.grafik-col-sum {
+  padding: 4px;
+  font-weight: 600;
+  font-size: 11px;
+  background: #008000;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border-right: 1px solid #005500;
+}
+.grafik-col-trud {
+  padding: 4px;
+  font-weight: 600;
+  font-size: 11px;
+  background: #808080;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.grafik-header-months {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.grafik-year-header {
+  text-align: center;
+    font-weight: 600;
+    padding: 4px 0;
+    color: #fff;
+}
+.grafik-year-header.base {  background: #0056b3; }
+.grafik-year-header.next {   background: #e09ca7;}
+.grafik-months-row {
+    display: flex !important;
+    border-bottom: 1px solid #ddd;
+}
+.grafik-month-cell {
+    text-align: center;
+    font-size: 11px;
+    padding: 2px 0;
+    border-right: 1px solid #eee;
+}
+.grafik-month-cell.base {
+    color: #0056b3;
+    background: #f0f7ff;
+}
+
+.grafik-month-cell.next {
+    color: #e18a98;
+    background: #fff0f0;
+}
+
+/* Столбчатая диаграмма */
+.grafik-chart-wrap {
+  display: flex;
+  height: 36px;
+  background: #f8fcff;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.grafik-chart-fixed {
+  width: var(--gc-total); /* t66: выравнивание диаграммы по месяцам (было 380px) */
+  flex-shrink: 0;
+  border-right: 1px solid var(--border);
+}
+.grafik-chart-bars {
+    display: flex !important;
+    height: 34px;
+    background: #fafafa;
+    border-bottom: 1px solid #ddd;
+}
+.grafik-bar {
+    position: relative;
+    border-right: 1px solid #eee;
+
+}
+.grafik-bar.next { background: #e09ca7; }
+
+/* Тело таблицы */
+.grafik-body {
+  flex: 1;
+  overflow: auto;
+  background: #fff;
+}
+
+.grafik-bar-inner {
+    transition: height 0.2s;
+}
+.grafik-row {
+  display: flex;
+  height: 20px;
+  border-bottom: 1px solid #add8e6;
+}
+.grafik-row:hover { background: #f6f8fa; }
+.grafik-row-fixed {
+    display: flex;
+    flex-shrink: 0;
+    border-right: 1px solid var(--border);
+    background: inherit;
+    /* width и min-width удалены отсюда, их задаст JS */
+}
+.grafik-cell-name,
+.grafik-cell-firma,
+.grafik-cell-zak,
+.grafik-cell-sum,
+.grafik-cell-trud {
+    /* width убран, чтобы не конфликтовать с JS */
+    padding: 1px 8px;
+    font-size: 11px;
+
+    border-right: 1px solid #ddd;
+    box-sizing: border-box; /* Важно для корректного расчета ширины с padding */
+     word-wrap: break-word;
+
+
+}
+.grafik-row-months {
+  display: flex;
+  flex-shrink: 0;
+}
+/* t66: фирма — одна строка, длинные названия с «…» (полный текст в title) */
+.grafik-cell-firma {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.grafik-month-input {
+  padding: 2px 4px;
+  border-left: none;       /* левая граница остаётся */
+  border-right: 1px solid #ccc;               /* правая уже убрана */
+  border-top: none;                 /* убираем верхнюю */
+  border-bottom: none;              /* убираем нижнюю */
+  font-size: 11px;
+  text-align: center;
+  outline: none;
+}
+.grafik-month-input.base { background: #fff; }
+.grafik-month-input.next { background: #fffaf7; }
+.grafik-month-input:focus {
+  background: #fff8dc;
+  border-color: var(--primary);
+  z-index: 1;
+  position: relative;
+}
+
+/* Итоги */
+.grafik-totals {
+  display: flex;
+  gap: 1px;
+  padding: 2px 6px;
+  background: #f6f8fa;
+  border-top: 2px solid var(--border);
+  flex-shrink: 0;
+}
+.grafik-total-block {
+  flex: 1;
+  padding: 2px 4px;
+  border-radius: 4px;
+  border: 1px solid;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.grafik-total-block.base {
+  background: #e8f4fd;
+  border-color: #3498db;
+}
+.grafik-total-block.next {
+  background: #fde8cc;
+  border-color: #e67e22;
+}
+.grafik-total-block.all {
+  background: #fff9e6;
+  border-color: #f0c040;
+}
+.grafik-total-cap {
+  font-size: 10px;
+  font-weight: bold;
+}
+.grafik-total-block.base .grafik-total-cap { color: #0054a6; }
+.grafik-total-block.next .grafik-total-cap { color: #b40000; }
+.grafik-total-block.all .grafik-total-cap { color: #643c00; }
+.grafik-total-val {
+  font-family: 'Courier New', monospace;
+  font-size: 16px;
+  font-weight: bold;
+  text-align: right;
+}
+.grafik-total-block.base .grafik-total-val { color: #0054a6; }
+.grafik-total-block.next .grafik-total-val { color: #b40000; }
+.grafik-total-block.all .grafik-total-val { color: #b40000; }
+
+/* ============================================================
+   РЕЖИМ РЕДАКТИРОВАНИЯ В ГРАФИКЕ
+   ============================================================ */
+.grafik-row.editing {
+  background: #fff8e1 !important;
+  box-shadow: inset 0 0 0 2px #ff9800;
+}
+
+.grafik-row.editing .grafik-row-fixed {
+  background: #fff8e1;
+}
+
+.grafik-row.editing .grafik-cell-name {
+  font-weight: 600;
+  color: #e65100;
+}
+
+/* Индикатор блокировки другим пользователем */
+.grafik-row.locked {
+  background: #ffebee !important;
+  opacity: 0.7;
+}
+
+.grafik-row.locked .grafik-month-input {
+  background: #ffcdd2 !important;
+  cursor: not-allowed;
+}
+
+.grafik-row.locked::after {
+  content: '🔒';
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+}
+
+.grafik-row {
+  position: relative;
+}
+
+/* Подсветка активного поля */
+.grafik-month-input:focus {
+  background: #fff8dc !important;
+  border: 2px solid #ff9800 !important;
+  z-index: 2;
+  position: relative;
+}
+
+/* ===== ПОЗИЦИОНИРОВАНИЕ ДЛЯ РЕСАЙЗЕРОВ ===== */
+.grafik-col-name,
+.grafik-col-firma,
+.grafik-col-zak,
+.grafik-col-sum,
+.grafik-col-trud {
+    position: relative;
+    box-sizing: border-box;
+}
+
+/* ============================================================
+   ЕДИНЫЙ ИСТОЧНИК ШИРИН КОЛОНОК — CSS-ПЕРЕМЕННЫЕ
+   ------------------------------------------------------------
+   grafik-resizer.js меняет только эти переменные на общем предке
+   .grafik-scroll-content. Заголовки (.grafik-col-*) и ячейки строк
+   (.grafik-cell-*) читают ОДНИ И ТЕ ЖЕ переменные, поэтому ширины
+   не рассинхронизируются ни после renderBody() (фильтры, «Обновить»,
+   смена года, WebSocket), ни после перетаскивания ресайзеров.
+   ============================================================ */
+.grafik-scroll-content {
+  --gc-name: 300px;
+  --gc-firma: 140px; /* t66: фирма лучшего КП позиции */
+  --gc-zak: 70px;
+  --gc-sum: 80px;
+  --gc-trud: 80px;
+  --gc-total: calc(var(--gc-name) + var(--gc-firma) + var(--gc-zak) + var(--gc-sum) + var(--gc-trud));
+  --gc-months: 690px; /* totalCols * 46px; обновляется из Grafik.renderHeader */
+}
+
+/* Пары «заголовок + ячейка строки» — одна переменная на пару */
+.grafik-col-name,
+.grafik-cell-name {
+    width: var(--gc-name);
+    min-width: var(--gc-name);
+    flex: 0 0 var(--gc-name);
+}
+.grafik-col-firma,
+.grafik-cell-firma {
+    width: var(--gc-firma);
+    min-width: var(--gc-firma);
+    flex: 0 0 var(--gc-firma);
+}
+.grafik-col-zak,
+.grafik-cell-zak {
+    width: var(--gc-zak);
+    min-width: var(--gc-zak);
+    flex: 0 0 var(--gc-zak);
+}
+.grafik-col-sum,
+.grafik-cell-sum {
+    width: var(--gc-sum);
+    min-width: var(--gc-sum);
+    flex: 0 0 var(--gc-sum);
+}
+.grafik-col-trud,
+.grafik-cell-trud {
+    width: var(--gc-trud);
+    min-width: var(--gc-trud);
+    flex: 0 0 var(--gc-trud);
+}
+
+/* Фиксированные блоки (заголовок / диаграмма / строки) — суммарная ширина */
+.grafik-header-fixed,
+.grafik-chart-fixed,
+.grafik-row-fixed {
+    width: var(--gc-total);
+    min-width: var(--gc-total);
+    flex: 0 0 var(--gc-total);
+}
+
+
+/* ===== grafik.css (добавить) ===== */
+
+/* Контейнер с горизонтальной прокруткой */
+.grafik-scroll-container {
+  flex: 1;
+  min-height: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+/* Контент внутри скролл-контейнера.
+   height:100% — КЛЮЧЕВОЕ ограничение: без него контент (и тело таблицы)
+   растягивается на всю высоту данных, вертикального скролла нет,
+   а виртуальное окно считает все строки видимыми.
+   min-width = фиксированная часть + месячная часть —
+   обе заданы переменными, рассинхронизации быть не может */
+.grafik-scroll-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-width: calc(var(--gc-total, 530px) + var(--gc-months, 690px));
+}
+
+/* Убираем горизонтальный скролл у тела таблицы */
+.grafik-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;  /* ← Важно: отключаем горизонтальный скролл */
+  background: #fff;
+}
+
+/* Заголовок и диаграмма не должны иметь overflow */
+.grafik-header-wrap,
+.grafik-chart-wrap {
+  flex-shrink: 0;
+  overflow-x: visible;
+}
+
+/* Фиксированная часть */
+.grafik-header-fixed,
+.grafik-chart-fixed {
+  flex-shrink: 0;
+  z-index: 5;
+}
+
+/* Адаптация под разное количество колонок:
+   ширину месячной части задаёт Grafik.renderHeader через --gc-months,
+   отдельные data-cols правила больше не нужны */
+/* ============================================================
+   ВИРТУАЛЬНЫЙ ВЕРТИКАЛЬНЫЙ СКРОЛЛИНГ ТЕЛА ТАБЛИЦЫ
+   ============================================================ */
+/* Спейсер создаёт полную высоту данных (height = позиции * 20px, задаёт JS).
+   Именно он даёт вертикальную прокрутку на 5000+ позиций без 100000 DOM-узлов */
+.grafik-body-spacer {
+  position: relative;
+}
+
+/* Окно с видимыми строками; смещение top выставляет renderWindow() */
+.grafik-body-window {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+}
+
+/* Сообщение при пустом результате фильтрации */
+.grafik-empty {
+  padding: 24px;
+  text-align: center;
+  color: #7a8699;
+  font-size: 13px;
+}

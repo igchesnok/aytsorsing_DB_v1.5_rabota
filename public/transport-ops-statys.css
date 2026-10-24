@@ -1,0 +1,54 @@
+/* transport-ops-statys.css */
+/*  ===== ÏÎÄÑÂÅÒÊÀ ÑÒĞÎÊ ÏÎ ÑÒÀÒÓÑÓ ===== */
+.vtable-row.status-waiting {
+  background-color: #ffe0e6 !important; /* Ğîçîâûé ôîí */
+}
+
+.vtable-row.status-waiting:hover {
+  background-color: #ffcdd2 !important;
+}
+
+.vtable-row.status-waiting.selected {
+  background-color: #f8bbd0 !important;
+}
+
+.vtable-row.status-transit {
+  background-color: #fff9c4 !important; /* Æ¸ëòûé ôîí */
+}
+
+.vtable-row.status-transit:hover {
+  background-color: #fff59d !important;
+}
+
+.vtable-row.status-transit.selected {
+  background-color: #fff176 !important;
+}
+
+.vtable-row.status-completed {
+  background-color: #c8e6c9 !important; /* Çåë¸íûé ôîí */
+}
+
+.vtable-row.status-completed:hover {
+  background-color: #a5d6a7 !important;
+}
+
+.vtable-row.status-completed.selected {
+  background-color: #81c784 !important;
+}
+
+
+
+.direction-fieldset,
+.status-fieldset {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  margin: 0;
+}
+
+.direction-fieldset legend,
+.status-fieldset legend {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--muted);
+  padding: 0 4px;
+}

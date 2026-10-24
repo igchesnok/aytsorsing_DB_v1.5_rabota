@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Отчёт «Плоская таблица»</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; background: #f6f8fa; }
+
+    .ft-wrap { max-width: 1100px; margin: 0 auto; padding: 24px 20px; }
+
+    .ft-card {
+      background: #fff; border: 1px solid #d0d7de; border-radius: 10px;
+      padding: 20px 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .ft-card h2 { margin: 0 0 6px 0; font-size: 17px; color: #1f2328; }
+    .ft-desc { font-size: 13px; color: #656d76; margin: 0 0 16px 0; line-height: 1.5; }
+
+    .ft-filters { display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap; }
+    .ft-field { display: flex; flex-direction: column; gap: 4px; }
+    .ft-field label { font-size: 12px; font-weight: 600; color: #57606a; }
+    .ft-field select {
+      min-width: 220px; padding: 7px 10px; border: 1px solid #d0d7de;
+      border-radius: 6px; font-size: 13px; background: #fff;
+    }
+
+    .ft-btn {
+      padding: 8px 22px; border: none; border-radius: 6px; cursor: pointer;
+      font-size: 13px; font-weight: 600; color: #fff; background: #0969da;
+    }
+    .ft-btn:hover { background: #0757b3; }
+    .ft-btn:disabled { background: #8cbbec; cursor: wait; }
+
+    .ft-info { margin-top: 14px; font-size: 13px; color: #57606a; min-height: 18px; }
+    .ft-info.ok { color: #1a7f37; font-weight: 600; }
+    .ft-info.err { color: #cf222e; font-weight: 600; }
+
+    /* ===== модальное окно предпросмотра (как excel-preview.js, но для отчёта) ===== */
+    .ft-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.6); z-index: 99999;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .ft-modal {
+      background: white; border-radius: 12px; width: 95%; max-width: 1500px;
+      height: 92vh; display: flex; flex-direction: column; overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    }
+    .ft-modal-header {
+      padding: 14px 24px; background: #f6f8fa; border-bottom: 1px solid #d0d7de;
+      display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;
+    }
+    .ft-modal-header h2 { margin: 0; font-size: 15px; color: #1f2328; }
+    .ft-modal-header h2 span { color: #656d76; font-weight: 400; font-size: 13px; }
+    .ft-modal-btns { display: flex; gap: 10px; }
+    .ft-modal-btns button {
+      padding: 8px 20px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600;
+    }
+    #ftDownload { background: #0969da; color: #fff; border: none; text-decoration: none;
+      display: inline-block; }
+    #ftDownload:hover { background: #0757b3; }
+    #ftClose { background: #fff; border: 1px solid #d0d7de; color: #cf222e; }
+    .ft-modal-body { flex: 1; overflow: hidden; position: relative; }
+    .ft-modal-body iframe {
+      width: 100%; height: 100%; border: none; position: absolute; top: 0; left: 0;
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <header class="app-header">
+    <h1>📊 Отчёт «Плоская таблица»</h1>
+    <div id="toast" class="toast hidden"></div>
+  </header>
+
+  <main class="content">
+    <div class="ft-wrap">
+      <div class="ft-card">
+        <h2>План производства × отгрузки × приходы × оплаты</h2>
+        <p class="ft-desc">
+          Одна строка — одно событие: отправка заготовок (первый шаг маршрута) или приём готовой
+          продукции (последний шаг). Промежуточные перемещения не выводятся. Количество пишется
+          только в колонку отправки <b>или</b> прихода — итог по каждой из них равен плановому
+          количеству позиции.
+        </p>
+        <div class="ft-filters">
+          <div class="ft-field">
+            <label for="fltGod">Год плана</label>
+            <select id="fltGod"><option value="">Все годы</option></select>
+          </div>
+          <div class="ft-field">
+            <label for="fltFirma">Фирма (поставщик по КП)</label>
+            <select id="fltFirma"><option value="">Все фирмы</option></select>
+          </div>
+          <button class="ft-btn" id="btnGenerate">🔄 Сформировать</button>
+        </div>
+        <div class="ft-info" id="reportInfo"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script type="module" src="../js/app-flat-table.js"></script>
+</body>
+</html>

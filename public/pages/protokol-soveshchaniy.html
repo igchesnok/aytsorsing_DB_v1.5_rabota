@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Протокол совещаний</title>
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="../resizer.css">
+  <style>
+    /* ==== Локальные стили страницы совещаний ==== */
+    .mt-topbar {
+      display: flex;
+      gap: 4px;
+      align-items: center;          /* вертикальное выравнивание по центру */
+      flex-wrap: nowrap;            /* запрещаем перенос на новую строку */
+      overflow-x: auto;             /* добавляем скролл, если не помещаются */
+      padding: 10px 14px;
+      background: #eef7ee;
+      border-bottom: 1px solid var(--border);
+    }
+    .mt-topbar fieldset {
+                  /* не растягиваем и не сжимаем */
+      border: 1px solid var(--border); border-radius: 6px;
+      padding: 6px 10px 8px; margin: 0; background: #fff;
+    }
+    .mt-topbar legend {
+      font-size: 11px; font-weight: 700; color: #3c5c3c;
+      padding: 0 6px; text-transform: uppercase; letter-spacing: .4px;
+    }
+    .mt-topbar .chk { display: block; margin: 2px 0; }
+    .mt-select {
+      padding: 4px 8px; border: 1px solid var(--border);
+      border-radius: 4px; min-width: 290px; font-size: 12px;  background: #fff;
+    }
+
+    /* Карточка партии */
+    .mt-info {
+      margin-top: 8px; padding: 8px 10px; background: #f6f8fa;
+      border-radius: 4px; font-size: 11.5px; line-height: 1.55;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px;
+    }
+    .mt-info b { color: var(--primary); }
+
+    /* Таблица операций совещания */
+    .mt-ops { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+    .mt-ops th, .mt-ops td {
+      border: 1px solid var(--border); padding: 4px 6px; text-align: left;
+      vertical-align: middle;
+    }
+    .mt-ops th {
+      background: #f0f3f6; font-weight: 600; white-space: nowrap;
+    }
+    .mt-ops input[type="date"], .mt-ops input[type="text"] {
+      width: 100%; min-width: 92px; padding: 3px 5px;
+      border: 1px solid #cdd4dc; border-radius: 3px; font-size: 11.5px;
+      box-sizing: border-box;
+    }
+    /* v3: узкое поле количества, широкий комментарий-textarea */
+    .mt-ops input[type="number"] { min-width: 42px; }
+    .mt-ops td.op-komm { width: 260px; min-width: 220px; }
+    .mt-ops textarea {
+      width: 100%; min-width: 210px; padding: 3px 5px;
+      border: 1px solid #cdd4dc; border-radius: 3px; font-size: 11.5px;
+      font-family: inherit; line-height: 1.4; resize: none;
+      overflow-y: auto; box-sizing: border-box; display: block;
+      scrollbar-width: thin; scrollbar-color: #b8c4d0 #eef1f4;
+    }
+    .mt-ops textarea::-webkit-scrollbar { width: 8px; height: 8px; }
+    .mt-ops textarea::-webkit-scrollbar-track { background: #eef1f4; border-radius: 4px; }
+    .mt-ops textarea::-webkit-scrollbar-thumb { background: #b8c4d0; border-radius: 4px; }
+    .mt-ops textarea::-webkit-scrollbar-thumb:hover { background: #9aabbc; }
+    .mt-ops td.op-num { text-align: center; width: 30px; color: #667; }
+    .mt-ops td.op-name { min-width: 160px; }
+    .mt-ops td.op-status { white-space: nowrap; width: 90px; }
+    .mt-ops tr.op-done td { background: #e2f6e2; }          /* выполнена — зелёная */
+    .mt-ops tr.op-done td.op-status { color: #1c7c1c; font-weight: 700; }
+    .mt-ops tr.op-inwork td { background: #fff7dc; }        /* в работе — жёлтая */
+    .mt-ops tr.op-inwork td.op-status { color: #8a6d00; font-weight: 600; }
+    .mt-ops tr.op-last td.op-name::after {
+      content: " ◀ последняя"; color: #b00; font-size: 10px; font-weight: 700;
+    }
+    .mt-ops tr.op-legacy td.op-name::after {
+      content: " (нет строки факта)"; color: #888; font-size: 10px;
+    }
+
+    .mt-hint {
+      margin-top: 8px; padding: 7px 10px; border-radius: 4px;
+      background: #eef4ff; border: 1px solid #d4e2ff;
+      font-size: 11px; color: #2a4a7a;
+    }
+    .mt-warn {
+      margin-top: 8px; padding: 7px 10px; border-radius: 4px;
+      background: #fff3e0; border: 1px solid #ffd699;
+      font-size: 11px; color: #7a4a00;
+    }
+    .mt-addop {
+      margin-top: 10px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+    }
+    .mt-addop input[type="text"] {
+      flex: 1; min-width: 220px; padding: 5px 8px;
+      border: 1px solid var(--border); border-radius: 4px; font-size: 12px;
+    }
+    .mt-form-actions { margin-top: 12px; display: flex; gap: 8px; align-items: center; }
+    .mt-empty {
+      padding: 24px 10px; text-align: center; color: #778;
+      font-size: 12px;
+    }
+    .mt-count { margin-left: 10px; font-size: 11px; color: #567; }
+    .mt-status-badge { font-weight: 700; }
+    .mt-status-badge.ready { color: #1c7c1c; }
+    .mt-status-badge.work  { color: #8a6d00; }
+  </style>
+</head>
+<body>
+
+<div class="app">
+  <header class="app-header">
+    <h1>📝 Протокол совещаний</h1>
+    <div id="toast" class="toast hidden"></div>
+    <div id="wsStatus" class="ws-status disconnected">⚫ Offline</div>
+  </header>
+
+  <!-- Верхняя панель: режим совещания -->
+  <div class="mt-topbar">
+    <fieldset>
+      <legend>Совещание с исполнителем</legend>
+      <label class="chk">
+        <input type="radio" name="mtMode" value="firm" checked>
+        Фирма-поставщик (шаги «Контрагент»)
+      </label>
+      <label class="chk">
+        <input type="radio" name="mtMode" value="pto">
+        ПТО — наше производство (шаги «ПТО»)
+      </label>
+    </fieldset>
+
+    <fieldset id="mtFirmaFieldset">
+      <legend>Фирма</legend>
+      <select id="mtFirma" class="mt-select">
+        <option value="">— Загрузка фирм… —</option>
+      </select>
+      <div id="mtFirmaHint" style="font-size: 11px; color: #567; margin-top: 4px;"></div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Статус партий</legend>
+      <select id="mtStatus" class="mt-select" style="min-width: 190px;">
+        <option value="">Все партии</option>
+        <option value="work">Только в работе</option>
+        <option value="ready">Готовы к отправке</option>
+      </select>
+    </fieldset>
+
+    <div style="align-self: center;">
+      <button class="btn" id="btnMtReload" title="Обновить">🔄 Обновить</button>
+    </div>
+  </div>
+
+  <!-- Рабочая область: список партий + карточка совещания -->
+  <div class="panel gorizont">
+
+    <main class="content" style="padding: 8px;">
+      <div class="panel vertikal">
+
+        <!-- Список партий у исполнителя -->
+        <div class="table-panel">
+          <div class="toolbar">
+            <h3 class="table-title">Партии у исполнителя в работе</h3>
+            <span id="mtCount" class="mt-count"></span>
+          </div>
+          <div id="mtTable" class="vtable-container"></div>
+        </div>
+
+        <!-- Вертикальный ресайзер: меняет ширину формы -->
+        <div class="resizer"></div>
+
+        <!-- Карточка совещания по партии -->
+        <div class="form-panel form-wide">
+          <h4 id="mtFormTitle">Партия не выбрана</h4>
+
+          <div id="mtFormEmpty" class="mt-empty">
+            Кликните по партии в таблице слева, чтобы открыть протокол совещания:
+            текущий шаг, операции, плановые и фактические даты.
+          </div>
+
+          <div id="mtFormBody" style="display: none;">
+
+            <!-- Сводка по партии -->
+            <div class="mt-info" id="mtInfo"></div>
+
+            <!-- Операции шага -->
+            <div style="margin-top: 10px;">
+              <table class="mt-ops">
+                <thead>
+                  <tr>
+                    <th style="width:30px;">№</th>
+                    <th>Операция</th>
+                    <th style="width:110px;">План начало</th>
+                    <th style="width:110px;">План оконч.</th>
+                    <th style="width:110px;">Факт начало</th>
+                    <th style="width:110px;">Факт оконч.</th>
+                    <th style="width:45px; white-space:normal;">Выполнено, шт.</th>
+                    <th style="width:90px;">Статус</th>
+                    <th style="width:260px;">Комментарий</th>
+                  </tr>
+                </thead>
+                <tbody id="mtOpsBody"></tbody>
+              </table>
+            </div>
+
+            <div id="mtLegacyWarn" class="mt-warn" style="display: none;"></div>
+
+            <div class="mt-hint">
+              План/факт начала подставляются автоматически: по умолчанию — дата получения
+              партии, план-окончание операции переносится в начала следующей (правьте при
+              необходимости). Заполнение фактической даты окончания подтверждает выполнение
+              операции (строка зеленеет). Закрытие факта по <b>последней операции шага</b>
+              с <b>полным выполненным количеством</b> делает партию <b>готовой к отправке</b>
+              (частично выполненная — 50 из 100 — остаётся в работе, пока не доделана) —
+              следующий шаг маршрута откроется на странице «План перевозок». Комментарий
+              по операции сохраняется в fakt_marshruta.kommentariy.
+            </div>
+
+            <!-- Добавление операции в начатый шаг (только здесь) -->
+            <fieldset style="margin-top: 12px;">
+              <legend>Добавить операцию в текущий шаг</legend>
+              <div class="mt-addop">
+                <input type="text" id="mtNewOpName"
+                       placeholder="Наименование операции (например: Дополнительная термообработка)">
+                <button class="btn btn-primary" id="btnMtAddOp">➕ Добавить операцию</button>
+              </div>
+              <div style="font-size: 11px; color: #667; margin-top: 6px;">
+                Добавление доступно только на этой странице. Если у какой-либо партии этой
+                позиции шаг уже завершён фактом, добавление будет заблокировано — это
+                защищает готовность уже завершённых партий от задним числом «разуплотнения».
+              </div>
+            </fieldset>
+
+            <div class="mt-form-actions">
+              <button class="btn btn-success" id="btnMtSave">💾 Сохранить изменения</button>
+              <span id="mtSaveInfo" style="font-size: 11px; color: #567;"></span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+  </div>
+</div>
+
+<script type="module" src="../js/app-protokol.js"></script>
+</body>
+</html>

@@ -1,0 +1,217 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=9" />
+    <title>Карточка документа</title>
+    <!--Подключаем jquery Tools со встроенной jQuery т.к. то что они предлагают скачать все равно не работает-->
+    <script src="Scripts/jquery-1.7.1.min.js" type="text/javascript"></script>
+    <script src="Scripts/plugins/jquery.tools.min.js" type="text/javascript"></script>
+    <script src="Scripts/plugins/tools.translate.js" type="text/javascript"></script>
+    <link id="PrintStyle" rel="stylesheet" type="text/css" href="styles/Print.css" media="print" />
+    <link id="MainStyle" rel="stylesheet" type="text/css" href="styles/MainStyle.css" media="screen" />
+    <!-- Подключаем jquery с поддержкой виджетов -->
+    <link href="Styles/redmond/jquery-ui.css" rel="stylesheet" type="text/css" />
+    <script src="Scripts/jquery-ui-1.8.16.min.js" type="text/javascript"></script>
+    <!--диалоги Alert,Confirm,Promt-->
+    <link href="Scripts/plugins/jquery.alerts.css" rel="stylesheet" type="text/css" />
+    <script src="Scripts/plugins/jquery.alerts.js" type="text/javascript"></script>
+<!--Локализация javascriptов-->
+<script src="./cultures/string_resources.aspx" type="text/javascript"></script>
+<script src="./cultures/localization.aspx" type="text/javascript"></script>
+    <!--русификация календаля-->
+    <script src="Scripts/datepicker.translate.js" type="text/javascript"></script>
+    <!--скрипт для стикеров -->
+    <link href="Scripts/plugins/jquery.stickr.css" rel="stylesheet" type="text/css" />
+    <script src="Scripts/plugins/jquery.stickr.js" type="text/javascript"></script>
+    <!--скрипт для редактора -->
+    <script src="Scripts/plugins/autoresize-mod.jquery.js" type="text/javascript"></script>
+    <!--общие скрипты для всех страниц -->
+    <!--link href="Scripts/plugins/AddressBook.css" rel="stylesheet" type="text/css" /-->
+    <script src="Scripts/plugins/AddressBook.js" type="text/javascript"></script>
+    <script src="Scripts/plugins/AddressMultiBook.js" type="text/javascript"></script>
+    <!--скрипты для этой страницы -->
+    <link href="Styles/dateinput.css" rel="stylesheet" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="Styles/Kart.css" />
+
+    <script src="Scripts/Kart.js?ver=2026.10" type="text/javascript"></script>
+    <!--Профиль пользователя-->
+    <link href="styles/UserDesc.css" rel="stylesheet" type="text/css" />
+    <script src="scripts/userdesc.js" type="text/javascript"></script>
+    <!--Всплывающие подсказки-->
+    <link rel="stylesheet" type="text/css" href="Scripts/plugins/jQtooltip.css" />
+</head>
+<body class="back">
+    <form id="KartForm" action="#" enctype="multipart/form-data" method="post" class="send">
+        <fieldset id="KartPanel">
+            <legend>
+                <button type="button" id="SaveBtn" data-string-title="s_access_fold_save_submit_fld">
+                    <img src="images/sohran2.gif" data-string-alt="s_access_fold_save_submit_fld" /></button>
+                <button type="button" id="ResetBtn" data-string-title="lbl_cancel">
+                    <img src="images/refresh16.png" data-string-title="lbl_cancel" /></button><!--отмена-->
+                <button type="button" class="button_preview" id="PreViewBtn" data-string-title="s_print_preview">
+                    <img src="images/printPreView16.png" data-string-alt="s_print_preview" /></button>
+                <button type="button" class="button_print" id="PrintBtn" data-string-title="ss_print">
+                    <img src="images/printoff17.gif" data-string-alt="ss_print" /></button>
+                <label>Регистрационная карточка документа [ Чесноков И.И. ] 1F010/951 от 23.10.2026</label>
+            </legend>
+            <input id="isEditMode" type="hidden" value="1" />
+            <input id="d_writer" type="hidden" value="42074" />
+            <input id="d_type_inp" type="hidden" value="V01" />
+            <input id="ProjType_inp" type="hidden" value="" />
+            <input id="d_kod_inp" name="D_KOD" type="hidden" value="65941959" />
+            <input id="privacy_inp" type="hidden" value="D" />
+            <input id="d_kod_out" type="hidden" value="-1" />
+            <label data-string="s_dat"><!--Дата регистрации--></label>
+            <label name="DATE_REG" class="input">23.10.2026 15:27</label>
+            <label data-string="s_registr"><!--Регистратор--></label>
+            <label type="text" name="REGISTRATOR" class="input" user_id="0">Чесноков И.И.</label>
+            <label class="long" data-string="ss_type"><!--Тип документа-->:</label>
+            <select id="D_TYPE" name="D_TYPE" class="long" required="required">
+                
+                <option kategoryid="1" value="V01">Ф.V01 - Электронная служебная записка</option>
+                
+            </select>
+            <label data-string="s_type_proj"><!--Вид проекта-->:</label>
+
+            <select id="ProjType" name="ASUD_TYPE" class="text" >
+                
+            </select>
+            <!--Постоянная часть-->
+            <div class="ConstantPanel">
+                <label data-string="s_komy"><!--Кому--></label>
+                <textarea type="person" name="FIO" id="FIO" dolgn="DOLGN" kod="KOMY" maxlength="1024"  invisible_for_dtypes="200,504,700,124,A01,VC1" rows="2" /></textarea>
+                <label data-string="s_komy_dolgn"><!--Кому (должность)--></label>
+                <textarea type="text" id="DOLGN" name="DOLGN" maxlength="350" invisible_for_dtypes="200,504,700,124,A01,VC1"></textarea>
+                <input type="hidden" id="KOMY" name="KOMY" required="required" value="0" />
+                <label data-string="s_dpost"><!--Дата поступления--></label>
+                <input type="text" class="date" name="D_DATE" value="23.10.2026" invisible_for_dtypes="102,H00,A01,V01,V02,V03,V04,V09,V10" />
+                <br />
+            </div>
+            <!--Постоянная часть-->
+            <hr />
+            <!--Переменная часть-->
+            <div class="nonedisplay VariablePanel">
+                <label data-string="s_index"><!--Индекс поступления--></label>
+                <label type="text" name="D_INNUM" kategory="0" class="input" maxlength="200"></label>
+            </div>
+            <!--Переменная часть-->
+            <!--Постоянная часть-->
+            <div class="ConstantPanel">
+                <label data-string="s_ndoc"><!--№ документа--></label>
+                <label type="text" name="D_NOM" class="input" maxlength="50">1F010/951</label>
+                <label data-string="s_date_doc"><!--Дата документа--></label>
+                <label name="DATE_DOC" id="DATE_DOC" required="required" class="input" invisible_for_dtypes="300,124">23.10.2026</label><br />
+                
+                <label data-string="s_na"><!--На №--></label>
+                <input type="text" name="NA_NOM" maxlength="200" value="" invisible_for_dtypes="H00,300,124,A01,400,40E,V09,V10,VC1" />
+                <label data-string="lbl_mo_from_data"><!--От --></label>
+                <input type="text" class="date" name="OT" value="" invisible_for_dtypes="H00,300,124,A01,400,40E,V09,V10,VC1" /><br />
+                <label class="long" id="LABEL_D_NAME" data-string="s_name_issues"><!--Краткое содержание / Вопросы обсуждения--></label>
+                <textarea class="long" maxlength="1024" name="D_NAME" required="required" type="text" invisible_for_dtypes="124">Срочная заявка на 28.10.2026 АО &#171;АВТОВАЗ&#187; - ООО &#171;Техспецсварка&#187;</textarea>
+            </div>
+            <!--Постоянная часть-->
+            <hr />
+            <!--Переменная часть-->
+            <div id="VariablePanel" class="nonedisplay VariablePanel">
+                <!--3-->
+                <label data-string="s_city"><!--Город--></label>
+                <input type="text" name="GOROD" kategory="0,5,9" class="autolong" maxlength="200" value="" invisible_for_dtypes="800,A01" />
+                <label kategory="0" data-string="s_comp"><!--Орг-ция/Подраз-е--></label>
+                <label kategory="1" data-string="s_podr_where"><!--Подразд-е (куда)--></label>
+                <label kategory="5" data-string="s_org_where"><!--Организация (куда)--></label>
+                <textarea type="text" name="ORG_PODR" kategory="0,1,5" class="autolong" maxlength="200" invisible_for_dtypes="A01,V01,V02,V03,V04,V09,V10"></textarea>
+                <br kategory="1,2" />
+                <label data-string="s_visa"><!--Визировали--></label>
+                <textarea type="multiperson" name="VISA" kategory="1,2,5" class="autolong" maxlength="600" invisible_for_dtypes="A01,V01,V02,V03,V04,V09,V10,VC1"></textarea>
+
+                <label data-string="s_dept"><!--Подразд.-исполнитель--></label>
+                <input type="text" name="PODR_ISP" id="PODR_ISP" kategory="1,5" maxlength="200" value="" invisible_for_dtypes="V01,V02,V03,V04,V09,V10,VC1" />
+
+                <label kategory="5" data-string="s_form"><!--Форма отправки--></label>
+                <label kategory="0,3,9" data-string="s_form_delivery"><!--Способ доставки--></label>
+                <input type="text" name="FORMA_OTPR" id="FORMA_OTPR" kategory="0,3,5,9" maxlength="200" value="" invisible_for_dtypes="800" />
+
+                <br kategory="3,9,5" />
+                <label kategory="9" data-string="s_web"><!--WEB-сайт--></label>
+                <label kategory="3" data-string="s_return addr"><!--Обрат.адрес--></label>
+                <label kategory="5" data-string="s_where_whom"><!--Куда, кому--></label>
+<input type="text" name="ADRESS" id="ADRESS" kategory="3,5,9" maxlength="256" value="" class="autolong" invisible_for_dtypes="102"/>
+                <a href="" kategory="9" target="_blank">Сайт для отслеживания отправления</a>
+                <p kategory="9" style="margin: 5px 0;" data-string="s_mess_pick_up"><!--Данный документ Вам необходимо забрать по адресу Тольятти, Южное шоссе, 36, корпус 170/1 (АВЗ), кабинет 0128 (экспедиция) телефоны для справок 8 (8482) 11-30-36, 64-01-97.--></p>
+
+                <label kategory="7" data-string="s_srok_from"><!--Cрок действия с--></label>
+                <input type="text" class="date" name="PREDATE1" kategory="7" value="" />
+                <label kategory="7" data-string="s_srok_to"><!--Cрок действия по--></label>
+                <input type="text" class="date" name="PREDATE2" kategory="7" value="" />
+
+                <label class="subheader" kategory="7" data-string="s_ex"><!--Исполнение--></label>
+                
+                <label kategory="7" data-string="s_limit"><!--Лимит (в рублях)--></label>
+                <input type="text" name="PRENOM" kategory="7" maxlength="200" value="" />
+                <!--label kategory="7">Глав. бухгалтер</label>
+                <input type="person" name="AVTOR_SP" kategory="7" maxlength="" value="" /><br kategory="7" /-->
+                <label kategory="7" data-string="s_order_deleg"><!--В порядке передоверия--></label>
+                <input type="checkbox" id="PRENOM1" name="PRENOM1" kategory="7" class="autowidth" style="margin-right: 170px; width: auto;" value="" />
+                <input type="hidden" id="HPRENOM1" value="" />
+                <label kategory="7" data-string="s_original return"><!--Дата возврата оригинала--></label>
+                <input type="text" name="RETURN_DATE" kategory="7" class="date" value="" />
+                <!--4-->
+                <label data-string="s_pris"><!--Присутствовали--></label>
+                <textarea type="multiperson" name="PRISUT" kategory="4" class="autolong" maxlength="1024"></textarea>
+                <!--6-->
+                <label data-string="s_dprov"><!--Дата проведения--></label>
+                <input type="text" class="date" name="DATE_PROV" kategory="6" value="" />
+                <label data-string="s_tprov"><!--Время проведения--></label>
+                <input type="time" name="TIME_PROV" kategory="6" value="" />
+                <label data-string="s_pprov"><!--Место проведения--></label>
+                <input type="text" name="PLACE_PROV" kategory="6" class="autolong" maxlength="200" value="" />
+                <label data-string="s_prig"><!--Приглашаются--></label>
+                <textarea type="multiperson" name="PRIGL" kategory="6" class="autolong" maxlength="1024"></textarea>
+                <!--7-->
+                <!--label kategory="7">Прочие ограничения</label>
+                <textarea type="text" name="TEXTDOC" kategory="7" class="long" maxlength=""></textarea-->
+                <!--8-->
+                <label data-string="s_power_attorney"><!--На доверенность №--></label>
+                <textarea type="text" name="DOV_LIST" kategory="8" class="autolong"></textarea>
+
+                <br /><label kategory="0" style="width:auto;">Содержит персональные данные&nbsp;<span class="jQtooltip mini" title="При наличии в документа персональных данных (паспортные данные, ИНН и проч) следует выставить `галочку` и, после сохранения, ввести эти данные">?</span></label>
+                <input  kategory="0" type="checkbox" id="IS_PERSONAL" name="IS_PERSONAL" class="autowidth" style="width: auto;"  value="False" / >
+            </div>
+            <!--Переменная часть-->
+            <hr />
+            <!--Постоянная часть-->
+            <div class="ConstantPanel">
+                <label data-string="s_sign_fio"><!--Подписал--></label>
+                <input type="person" name="PODP" id="PODP" kod="PODP_KOD" dolgn="O_OTV_ISP" required="required" maxlength="200" value="Чесноков И.И." invisible_for_dtypes="124" /><input type="hidden" id="PODP_KOD" name="PODP_KOD" value="42074" />
+                <label data-string="s_dolg"><!--должность--></label>
+                <textarea type="text" id="O_OTV_ISP" name="O_OTV_ISP" maxlength="200" invisible_for_dtypes="102,124,H00,300,A01">Ведущий инженер по подготовке производства</textarea><br />
+                <label data-string="s_exec"><!--Исполнитель--></label>
+                <input type="person" name="D_ISPOLN" kod="D_ISPOLN_KOD" telefon="TEL_ISP" podr="D_ISPOLN_KOD_PODR" required="required" maxlength="200" value="Чесноков И.И." invisible_for_dtypes="300,124,VC1" />
+                <label data-string="s_texec"><!--телефон--></label>
+                <input type="text" id="TEL_ISP" name="TEL_ISP" maxlength="200" value="89276135046" invisible_for_dtypes="300,124,VC1" />
+                <input kategory="7" type="hidden" id="D_ISPOLN_KOD" name="D_ISPOLN_KOD" value="42074" />
+                
+                <label kategory="7" data-string="s_isp_kod"><!--Исполн. (код подр.)--></label>
+                <input kategory="7" type="text" id="D_ISPOLN_KOD_PODR" name="D_ISPOLN_KOD_PODR" maxlength="5" value="" class="short" />
+                <br />
+                <label data-string="sp_delo"></label><!--Дело-->
+                <label class="input" name="DELO" id="DELO" invisible_for_dtypes="124,A01" >1F010-00</label>
+                <label  class="short" data-string="s_kl"></label><!--Кол.лист.-->
+                <input type="text" name="KOL_LIST" class="short" maxlength="200" value="" invisible_for_dtypes="124,A01,V09,V10,VC1" />
+                <label class="short" data-string="s_ke"></label><!--Кол. экз.-->
+                <input type="number" name="KOL_EKZ" class="short" value="" invisible_for_dtypes="101,102,124,200,300,504,700,H00,A01,VC1" />
+<p id="delo-description"></p>                
+                <div style="float:right;margin:0; margin-top:20px;padding:0;width:230px;"><label style="vertical-align:middle;margin-right:0" data-string="s_conf"><!--КАТЕГОРИЯ - --></label><select id="PRIVACY" name="PRIVACY" data-string-title="s_conf" style="width:50px;vertical-align:middle; text-align:left;margin-left:0" invisible_for_dtypes="101,A00,C00,108,111,114,120,102,H00,A01,124,300,H01,V09,V10,VC1"><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select></div>
+
+            </div>
+            <!--Постоянная часть-->
+        </fieldset>
+    </form>
+    <div id="ajaxLoader" class="ajaxPanel">
+        <img src="images/ajax-loader2.gif" data-string-alt="p_load" width="32" height="32" /><span data-string="p_load"><!--Загрузка--></span>
+    </div>   
+
+
+</body>
+</html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Виды работ по договорам</title>
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="../resizer.css">
+  <style>
+    /* ===== Верхняя панель ===== */
+    .vr-topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 10px 14px;
+      background: #e6f3ff;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      flex-wrap: wrap;
+    }
+    .vr-topbar-left { display: flex; gap: 14px; align-items: flex-end; flex-wrap: wrap; flex: 1; }
+    .vr-topbar-right { display: flex; gap: 8px; align-items: center; }
+    .vr-field { display: flex; flex-direction: column; gap: 3px; min-width: 220px; }
+    .vr-field label {
+      font-size: 11px; font-weight: 600; color: var(--muted);
+    }
+    .vr-field select {
+      padding: 5px 8px; border: 1px solid var(--border); border-radius: 4px;
+      font-size: 12px; background: #fff; min-width: 220px;
+    }
+    .vr-field select:focus {
+      border-color: var(--primary); outline: none;
+      box-shadow: 0 0 0 2px rgba(9,105,218,.15);
+    }
+    /* ===== Блок групповой операции ===== */
+    .vr-copy-block {
+      display: flex; gap: 8px; align-items: flex-end;
+      padding: 8px 12px; background: #fff8e1;
+      border: 1px dashed #ff9800; border-radius: 4px;
+    }
+    .vr-copy-block label { font-size: 11px; color: #6a5200; font-weight: 600; }
+    .vr-copy-block select { min-width: 200px; }
+    /* ===== Счётчик ===== */
+    .vr-counter {
+      font-size: 11px; color: var(--muted); font-style: italic;
+      padding: 4px 10px; background: #f6f8fa; border-radius: 4px;
+    }
+    /* ===== Подсветка изменённой стоимости ===== */
+    .vr-modified {
+      background: #fff8e1 !important;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <header class="app-header">
+    <h1>💼 Виды работ по договорам</h1>
+    <div id="toast" class="toast hidden"></div>
+    <div id="wsStatus" class="ws-status disconnected">⚫ Offline</div>
+  </header>
+
+  <!-- ===== ВЕРХНЯЯ ПАНЕЛЬ: Фильтры + Групповая операция ===== -->
+  <div class="vr-topbar">
+    <div class="vr-topbar-left">
+      <div class="vr-field">
+        <label>Фирма:</label>
+        <select id="vrFirma"><option value="">— Выберите фирму —</option></select>
+      </div>
+      <div class="vr-field">
+        <label>Договор:</label>
+        <select id="vrDogovor"><option value="">— Выберите договор —</option></select>
+      </div>
+      <span id="vrCounter" class="vr-counter">Видов работ: 0</span>
+
+      <!-- Групповая операция: копирование из другого договора -->
+      <div class="vr-copy-block">
+        <div class="vr-field" style="min-width: 200px;">
+          <label>📋 Скопировать виды работ из договора:</label>
+          <select id="vrSourceDogovor"><option value="">— Источник —</option></select>
+        </div>
+        <button class="btn btn-primary" id="btnApplyCopy" disabled
+                title="Скопировать все виды работ из выбранного договора в текущий">
+          ➕ Применить к текущему
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== ОСНОВНАЯ РАБОЧАЯ ОБЛАСТЬ ===== -->
+  <div class="panel vertikal" style="flex: 1; min-height: 0;">
+    <!-- ЛЕВАЯ ПАНЕЛЬ: Таблица видов работ -->
+    <div class="table-panel">
+      <div class="toolbar">
+        <h3 class="table-title">
+          Виды работ <span id="vrTitleSuffix" class="hint"></span>
+        </h3>
+        <div class="toolbar-btns">
+          <button class="btn btn-primary" id="btnVrAdd" title="Добавить вид работ" disabled>➕</button>
+          <button class="btn btn-success" id="btnVrSave" title="Сохранить изменения" disabled>💾</button>
+          <button class="btn btn-danger" id="btnVrDel" title="Удалить вид работ" disabled>✖</button>
+          <button class="btn" id="btnVrPaste" title="Вставить из буфера (naimenovanie; stoimost)">📋</button>
+        </div>
+      </div>
+      <div id="vrTable" class="vtable-container"></div>
+    </div>
+
+    <!-- Вертикальный ресайзер -->
+    <div class="resizer"></div>
+
+    <!-- ПРАВАЯ ПАНЕЛЬ: Форма редактирования -->
+    <div class="form-panel form-wide">
+      <h4 id="vrFormTitle">Вид работ</h4>
+
+      <fieldset>
+        <legend>Выбор из справочника</legend>
+        <div class="form-grid">
+          <label style="grid-column: 1/-1">Готовый вид работ (опционально):
+            <select id="vrSpravVid">
+              <option value="">— Ввести вручную или выбрать из списка —</option>
+            </select>
+          </label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Параметры вида работ</legend>
+        <div class="form-grid">
+          <label style="grid-column: 1/-1">Наименование работ *
+            <input id="vrNaimenovanie" type="text"
+                   placeholder="Например: Фрезерная обработка с ЧПУ (габарит стола 850х500)">
+          </label>
+        </div>
+        <div class="form-grid cols-2" style="margin-top: 6px;">
+          <label>Стоимость н/ч, руб. без НДС *
+            <input id="vrStoimost" type="text" placeholder="1850">
+          </label>
+          <label>Привязка к справочнику
+            <input id="vrSpravVidInfo" type="text" readonly
+                   placeholder="автозаполнится при выборе">
+          </label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Информация о договоре</legend>
+        <div class="info-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 11px;">
+          <div><span style="color: var(--muted);">Фирма:</span> <span id="infoFirma">—</span></div>
+          <div><span style="color: var(--muted);">№ договора:</span> <span id="infoNomDogovor">—</span></div>
+          <div><span style="color: var(--muted);">Дата договора:</span> <span id="infoDataDogovor">—</span></div>
+          <div><span style="color: var(--muted);">ID записи:</span> <span id="infoId">—</span></div>
+        </div>
+      </fieldset>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="../js/app-vidy-rabot.js"></script>
+</body>
+</html>

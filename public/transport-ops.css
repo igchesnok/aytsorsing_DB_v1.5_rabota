@@ -1,0 +1,233 @@
+/* ===== public/transport-ops.css ===== */
+/* ============================================================
+   transport-ops.css  СТИЛИ ДЛЯ РЕДАКТОРА ТРАНСПОРТНЫХ ОПЕРАЦИЙ
+   ============================================================ */
+
+/* ===== ВЕРХНЯЯ ПАНЕЛЬ ===== */
+.transport-topbar {
+  display: flex;
+  justify-content: space-between;
+
+  padding: 4px 8px;
+  background: #e6f3ff;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.transport-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.transport-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+
+
+
+/* ===== ФОРМА ТРАНСПОРТНОЙ ОПЕРАЦИИ ===== */
+.transport-form {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.transport-form fieldset {
+  margin-bottom: 0px;
+}
+
+.transport-form fieldset legend {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+/* ===== ПАРАМЕТРЫ ПЕРЕВОЗКИ (сетка) ===== */
+.param-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.param-grid fieldset {
+  margin: 0;
+}
+
+.param-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  justify-content: center;
+}
+
+/* ===== ТАБЛИЦЫ ВНУТРИ ВКЛАДОК ===== */
+.transport-table-block {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  min-height: 150px;
+}
+
+.transport-table-block .vtable-container {
+  flex: 1;
+  min-height: 100px;
+}
+
+/* ===== КНОПКИ ПЕРЕМЕЩЕНИЯ ===== */
+.transport-move-btns {
+  display: flex;
+  gap: 1px;
+  justify-content: center;
+  margin: 0px 0;
+}
+
+/* ===== КНОПКИ CRUD ===== */
+.transport-crud-btns {
+  display: flex;
+  gap: 3px;
+  justify-content: center;
+  padding: 2px;
+  border-top: 1px solid var(--border);
+  margin-top: 0x;
+}
+
+/* ===== ДОКУМЕНТЫ ===== */
+.document-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+
+/* ===== АДАПТИВНОСТЬ ===== */
+@media (max-width: 1200px) {
+  .param-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .transport-topbar {
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+
+/* ✅ ТИПЫ ГРУЗА: комбо «Наименование» (свободный ввод + список истории) */
+.combo { position: relative; }
+.combo input { width: 100%; box-sizing: border-box; padding-right: 26px; }
+/* ✅ T21: кнопка развернуть/свернуть списка (как у стандартного селекта) */
+.combo-toggle {
+  position: absolute; right: 2px; top: 50%; transform: translateY(-50%);
+  width: 22px; height: calc(100% - 4px); border: none; background: transparent;
+  cursor: pointer; color: #5b6773; font-size: 10px; line-height: 1; padding: 0;
+  display: flex; align-items: center; justify-content: center; z-index: 2;
+}
+.combo-toggle:hover { background: #e2e9f0; border-radius: 3px; }
+.combo-list {
+  position: absolute; top: 100%; left: 0; right: 0; z-index: 50;
+  background: #fff; border: 1px solid #c8d0d8; border-top: none;
+  max-height: 220px; overflow-y: auto; box-shadow: 0 6px 16px rgba(0,0,0,.18);
+}
+.combo-item { padding: 6px 10px; cursor: pointer; font-size: 13px; }
+.combo-item:hover { background: #eef4fb; }
+
+/* ✅ ТИПЫ ГРУЗА: модальное окно «Параметры заготовки» */
+.poz-params-overlay { position: fixed; inset: 0; background: rgba(20,30,40,.45); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+.poz-params-overlay.hidden { display: none; }
+.poz-params-window { background: #fff; border-radius: 8px; padding: 16px 20px; width: 430px; max-width: 95vw; box-shadow: 0 8px 30px rgba(0,0,0,.25); }
+.poz-params-window h3 { margin: 0 0 6px; font-size: 15px; }
+.poz-params-info { margin: 0 0 10px; color: #555; font-size: 13px; }
+.poz-params-window fieldset { border: 1px solid #c8d0d8; border-radius: 6px; margin-bottom: 10px; padding: 8px 10px; }
+.poz-params-window legend { font-size: 12px; color: #666; padding: 0 4px; }
+.poz-params-window label { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin: 6px 0; font-size: 13px; }
+.poz-params-window input { width: 140px; }
+.poz-params-hint { font-size: 12px; color: #888; margin: 4px 0 10px; }
+.poz-params-actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+/* ✅ T18 ПАРАМЕТРЫ (VBA cbListKomment): строка конструктора комментария */
+.treb-row { display: flex; gap: 8px; align-items: flex-start; }
+.treb-row .combo { flex: 1 1 auto; }
+.treb-row .btn { flex: 0 0 auto; white-space: nowrap; }
+
+/* ✅ T39-C: WYSIWYG-редактор текста СЗ (модалка «Редактирование текста СЗ») */
+.szl-btn { border: 1px solid #c8d0d8; background: #f7f9fb; border-radius: 5px; padding: 3px 10px; font-size: 12.5px; cursor: pointer; color: #24313d; line-height: 1.2; }
+.szl-btn:hover { background: #e8eef4; }
+.szl-btn.szl-on { background: #2f6f9f; color: #fff; border-color: #2f6f9f; }
+.szl-btn:active { transform: translateY(1px); }
+#szLetterEditor:focus { border-color: #2f6f9f; }
+
+/* ✅ T44: вкладка «Документы» — каждый документ в ОДНОЙ строке:
+   номер, дата, ID, Создать / Редактировать / Открыть сайт с документом */
+/* ✅ T44: на активной вкладке «Документы» панель формы шире (520 -> 800),
+   чтобы строка документа (номер, дата, ID, 3 кнопки) помещалась ЦЕЛИКОМ;
+   :has() поддерживается Яндекс Браузером (Chromium). */
+.transport-form.form-wide:has(#tabDokumenty.active) { width: 800px; }
+#tabDokumenty fieldset {
+  overflow-x: auto;            /* страховка: узкое окно — строки не переносятся */
+  min-width: 0;                /* fieldset в Chromium: min-width:min-content по умолчанию */
+}
+.doc-row {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-bottom: 6px;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  font-size: 12px;
+}
+.doc-row .doc-name {
+  flex: none;                  /* ширина по содержимому — без обрезки */
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary);
+  text-align: right;
+  white-space: nowrap;
+}
+.doc-row input[type="text"],
+.doc-row input[type="date"] {
+  flex: none;
+  width: 96px;
+  min-width: 96px;
+  padding: 3px 5px;
+  font-size: 12px;
+}
+.doc-row input[type="date"] { width: 100px; min-width: 100px; }
+.doc-row .doc-id {
+  flex: none;
+  width: 68px;
+  min-width: 68px;
+  padding: 3px 5px;
+  font-size: 12px;
+}
+.doc-row .btn {
+  flex: none;
+  font-size: 12px;
+  padding: 3px 5px;
+}
+.doc-row .doc-spacer {
+  display: inline-block;
+  background: transparent;
+  border: none;
+}
+
+/* ✅ T47: кнопка удаления СЗ — красный крестик (описание — в title) */
+.doc-row .doc-del { color: #d32f2f; font-weight: 700; }
+.doc-row .doc-del:hover { background: #fdecea; border-color: #d32f2f; }
+
+/* ============================================================
+   ✅ T57: таблица «Тарные места перевозки» (вкладка «Параметры перевозки»)
+   ============================================================ */
+.tarn-table-box { font-size: 12.5px; }
+.tarn-table-box .tarn-empty { color: #8a94a0; font-style: italic; margin: 4px 0 0; }
+.tarn-table-box .tarn-kpi { margin-bottom: 6px; color: #234; }
+.tarn-table-box table.tarn-table { border-collapse: collapse; width: 100%; }
+.tarn-table-box table.tarn-table th, .tarn-table-box table.tarn-table td { border: 1px solid #c3ccd6; padding: 4px 8px; text-align: left; }
+.tarn-table-box table.tarn-table th { background: #eef1f4; font-size: 12px; }
+.tarn-ukl { color: #8a6d1a; font-size: 11.5px; }

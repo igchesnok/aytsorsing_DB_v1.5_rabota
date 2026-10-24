@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Оплата работ</title> <!-- ✅ T102: страница «Оплата работ» (oplata_rabot + oplata_poz) -->
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="../resizer.css">
+  <style>
+    /* ✅ T104: модалка распределения суммы платежки по позициям */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 1000;
+      background: rgba(20, 30, 45, 0.55);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .modal-overlay.hidden { display: none; }
+    .modal-box {
+      background: #fff; border-radius: 8px; box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+      width: min(860px, 94vw); max-height: 88vh; overflow: auto; padding: 14px 18px;
+    }
+    .modal-box h4 { margin: 0 0 8px; font-size: 15px; color: #14304f; }
+    .rasp-docinfo { font-size: 12px; color: #333; margin-bottom: 4px; }
+    .rasp-otherinfo { font-size: 11px; color: #8a6d3b; margin-bottom: 6px; }
+    .rasp-head, .rasp-row {
+      display: grid; grid-template-columns: 110px 1fr 60px 90px 90px 110px;
+      gap: 6px; align-items: center; padding: 4px 6px;
+    }
+    .rasp-head {
+      font-size: 11px; font-weight: 700; color: #14304f;
+      background: #eef3f8; border-radius: 4px; margin-bottom: 4px;
+      position: sticky; top: -14px;
+    }
+    .rasp-row { border-bottom: 1px solid #edf1f5; font-size: 12px; }
+    .rasp-chert { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rasp-naim { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rasp-cell { text-align: left; }
+    .rasp-kolvo, .rasp-stoim, .rasp-opl { text-align: right; }
+    .rasp-sum { text-align: right; }
+    .rasp-input {
+      width: 100px; padding: 4px 6px; font-size: 12px;
+      border: 1px solid var(--border, #c9d2dc); border-radius: 4px; text-align: right;
+    }
+    .rasp-input:focus { outline: 2px solid #7fb3e0; }
+    .rasp-total { margin-top: 8px; font-size: 12px; }
+    .modal-btns { margin-top: 10px; display: flex; gap: 8px; justify-content: flex-end; }
+    /* ✅ T106: панель последовательных шагов работы с платежкой
+       (эталон — «Заказы по договорам») */
+    .steps-panel { margin-top: 10px; border-top: 1px solid #d0d7de; padding-top: 6px;
+                   display: flex; flex-direction: column; gap: 6px; }
+    .step-fs { flex-shrink: 0; border: 1px solid #c3ccd6; border-radius: 6px;
+               padding: 6px 8px 8px; margin: 0; min-width: 0; background: #fafcfe; }
+    .step-fs legend { font-size: 12px; font-weight: 600; display: flex; align-items: center;
+                      gap: 6px; padding: 0 4px; color: #1a2733; }
+    .step-badge { display: inline-flex; width: 18px; height: 18px; border-radius: 50%;
+                  align-items: center; justify-content: center; color: #fff; font-size: 11px;
+                  font-weight: 700; background: #9aa2ad; flex-shrink: 0; }
+    .step-badge.done { background: #2e9e44; }
+    .step-badge.active { background: #e08a00; }
+    .step-fs.blocked { opacity: .55; background: #f2f3f5; }
+    .step-row { display: flex; align-items: center; gap: 6px; margin: 4px 0 0; min-width: 0; }
+    .step-label { font-size: 11px; color: #5b6773; flex-shrink: 0; min-width: 108px; text-align: right; }
+    .step-input { flex: 1; min-width: 0; }
+    .step-hint { font-size: 10px; color: #b3541e; margin: 2px 0 0 8px; }
+    .file-link { font-size: 11px; color: #0e6bb8; text-decoration: underline; word-break: break-all; }
+    .file-link:hover { color: #0a5a9c; }
+  </style>
+</head>
+<body>
+
+<div class="app">
+  <header class="app-header">
+    <h1>💳 Оплата работ</h1>
+    <div id="toast" class="toast hidden"></div>
+    <div id="wsStatus" class="ws-status disconnected">⚫ Offline</div>
+  </header>
+
+  <!-- Фильтры транспортных операций: фирма / дата отправки / этап / тип перевозки -->
+  <div class="toolbar" style="padding: 10px 14px; background: #e6f3ff; border-bottom: 1px solid var(--border);">
+    <div style="display: flex; gap: 18px; align-items: center; flex-wrap: wrap;">
+      <label style="font-weight: 600;">Фильтры операций:</label>
+
+      <!-- ✅ T104: фирма — обязательный фильтр (платежка привязана к фирме) -->
+      <label style="display: flex; align-items: center; gap: 6px;" title="Обязательный фильтр: платежный документ жестко привязан к фирме">
+        <b>Фирма *</b>:
+        <select id="fltFirma" style="padding: 4px 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 12px; min-width: 200px;">
+          <option value="">— выберите фирму —</option>
+        </select>
+      </label>
+
+      <label style="display: flex; align-items: center; gap: 6px;">
+        Дата отправки:
+        <input id="fltDataOtgruzki" type="date" style="padding: 4px 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 12px;">
+      </label>
+
+      <!-- ✅ T104: № этапа (аванс → автоматически № эт. = 1) -->
+      <label style="display: flex; align-items: center; gap: 6px;" title="№ этапа маршрута. Устанавливается автоматически: тип оплаты «аванс» → № эт. = 1">
+        № эт.:
+        <select id="fltNomShag" style="padding: 4px 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 12px; min-width: 70px;">
+          <option value="">Все</option>
+        </select>
+      </label>
+
+      <label style="display: flex; align-items: center; gap: 6px;" title="Тип перевозки — шаг маршрута. Окончательный расчёт → автоматически «Получение готовой продукции»">
+        Тип перевозки:
+        <select id="fltTipPerevozki" style="padding: 4px 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 12px; min-width: 160px;">
+          <option value="">Все типы</option>
+        </select>
+      </label>
+
+      <!-- ✅ T104: № заказа к договору — обязательный фильтр (select), платежка привязана к заказу -->
+      <label style="display: flex; align-items: center; gap: 6px;" title="Обязательный фильтр: платежный документ жестко привязан к № заказа к договору (по позициям плана, партии которых в операции)">
+        <b>№ зак. дог. *</b>:
+        <select id="fltZakDog" style="padding: 4px 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 12px; min-width: 140px;">
+          <option value="">— выберите заказ —</option>
+        </select>
+      </label>
+
+      <label style="display: flex; align-items: center; gap: 6px;" title="№ заказа ПТО (plan.zak_pto позиций плана операции)">
+        № зак. ПТО:
+        <input id="fltZakPTO" type="text" placeholder="номер заказа" style="padding: 4px 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 12px; width: 120px;">
+      </label>
+
+      <button class="btn" id="btnResetFilters" title="Сбросить фильтры">✖ Сброс</button>
+    </div>
+  </div>
+
+  <!-- Внешняя раскладка: рабочая область + нижняя зона (оплаты + позиции) -->
+  <div class="panel gorizont">
+
+    <main class="content" style="padding: 8px;">
+
+      <!-- Внутренняя раскладка: таблица операций + форма оплаты -->
+      <div class="panel vertikal">
+
+        <!-- Транспортные операции -->
+        <div class="table-panel">
+          <div class="toolbar">
+            <h3 class="table-title">Транспортные операции</h3>
+            <div class="toolbar-btns">
+              <button class="btn" id="btnReloadOpers" title="Обновить список">🔄</button>
+            </div>
+          </div>
+          <div id="operTable" class="vtable-container"></div>
+        </div>
+
+        <!-- Вертикальный ресайзер: меняет ширину формы -->
+        <div class="resizer"></div>
+
+        <!-- Форма оплаты -->
+        <div class="form-panel form-wide">
+          <h4 id="oplFormTitle">Оплата работ</h4>
+
+          <fieldset>
+            <legend>Документ</legend>
+
+            <div class="form-grid cols-2">
+              <label>
+                Тип оплаты *
+                <select id="oplTipOplaty">
+                  <option value="">— выберите —</option>
+                  <option value="avans">Предоплата (аванс)</option>
+                  <option value="okonchatelny_raschet">Окончательный расчёт</option>
+                </select>
+              </label>
+
+              <label>
+                Дата предоставления документов
+                <input id="oplDataPredDok" type="date">
+              </label>
+
+              <label>
+                № акта / УПД
+                <input id="oplNomerAktaUpd" type="text" placeholder="номер акта или УПД">
+              </label>
+
+              <label>
+                № счёт-фактуры
+                <input id="oplNomerSchetFaktura" type="text" placeholder="номер счёт-фактуры">
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Суммы (₽)</legend>
+
+            <div class="form-grid cols-2">
+              <label>
+                Сумма к оплате, ₽ (без НДС) *
+                <input id="oplSumma" type="number" min="0" step="0.01" placeholder="0.00">
+              </label>
+
+              <label>
+                НДС, % (из договора)
+                <input id="oplNdsRate" type="text" readonly placeholder="—">
+              </label>
+
+              <label>
+                Сумма НДС, ₽
+                <input id="oplNdsSumma" type="text" readonly placeholder="—">
+              </label>
+
+              <label>
+                Итого с НДС, ₽
+                <input id="oplSummaSNds" type="text" readonly placeholder="—">
+              </label>
+            </div>
+
+            <div id="oplDogInfo" style="margin-top: 6px; font-size: 11px; color: #8a8f98;">
+              Ставка НДС определяется по договору грузовых позиций выбранной операции.
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Прочее</legend>
+
+            <label style="display: block;">
+              Примечание
+              <input id="oplPrimechanie" type="text" style="width: 100%;" placeholder="по необходимости">
+            </label>
+          </fieldset>
+
+          <div id="oplInfo" style="margin-top: 10px; padding: 10px; background: #f6f8fa; border-radius: 4px; font-size: 11px;">
+            <div><b>Операция:</b> <span id="infoOper">— не выбрана —</span></div>
+            <div><b>Фирма документа:</b> <span id="infoFirma">— не выбрана —</span></div>
+            <div><b>№ заказа (дог.):</b> <span id="infoZakDog">— не выбран —</span></div>
+            <div><b>Договор:</b> <span id="infoDogovor">—</span></div>
+            <div><b>Не распределено (без НДС):</b> <span id="infoNeRasp">—</span></div>
+            <div><b>Привязано позиций:</b> <span id="infoPozCount">—</span></div>
+          </div>
+
+          <!-- ✅ T106: панель последовательных шагов работы с платежкой
+               (эталон — «Заказы по договорам»); состав шагов зависит от типа оплаты -->
+          <div id="oplStepsPanel" class="steps-panel">
+            <fieldset class="step-fs" id="ostep1">
+              <legend><span class="step-badge" id="obadge1">1</span> Прикрепить PDF платёжного документа</legend>
+              <div class="step-row">
+                <button class="btn btn-sm" id="ost1Attach">📎 Прикрепить PDF документа</button>
+                <a id="ost1File" class="file-link hidden" target="_blank"></a>
+                <button class="btn btn-sm btn-danger" id="ost1Clear" title="Удалить прикреплённый файл" style="margin-left:auto;">✕</button>
+              </div>
+              <div class="step-hint" id="ohint1" style="display:none;"></div>
+            </fieldset>
+
+            <fieldset class="step-fs blocked" id="ostep2">
+              <legend><span class="step-badge" id="obadge2">2</span> <span id="ostep2Title">Шаг 2</span></legend>
+              <div class="step-row" id="ost2EmailRow">
+                <label class="step-label">Email:</label>
+                <input id="ost2Email" class="step-input" type="text" autocomplete="off"
+                       placeholder="адрес получателя (можно несколько через ; )">
+                <button class="btn btn-sm btn-primary" id="ost2Send" title="Отправить прикреплённый PDF платёжного документа на указанный адрес">✉ ➜</button>
+              </div>
+              <div class="step-row" id="ost2OneSRow">
+                <label class="step-label">Дата занесения в 1С:</label>
+                <input id="ost2Data1s" type="date" class="step-input" title="Дата занесения акта/УПД в 1С">
+              </div>
+              <div class="step-hint" id="ohint2" style="display:none;"></div>
+            </fieldset>
+
+            <fieldset class="step-fs blocked" id="ostep3">
+              <legend><span class="step-badge" id="obadge3">3</span> Реестр платежей</legend>
+              <div class="step-row">
+                <button class="btn btn-sm" id="ost3Print" title="Печать реестра по шаблону">🖨 Распечатать реестр по шаблону</button>
+                <span style="font-size: 10px; color: #b3541e;">заглушка — печать будет реализована позднее</span>
+              </div>
+              <div class="step-hint" id="ohint3" style="display:none;"></div>
+            </fieldset>
+
+            <fieldset class="step-fs blocked" id="ostep4">
+              <legend><span class="step-badge" id="obadge4">4</span> Скан подписанного реестра</legend>
+              <div class="step-row">
+                <button class="btn btn-sm" id="ost4Attach">📎 Прикрепить скан подписанного реестра (PDF)</button>
+                <a id="ost4File" class="file-link hidden" target="_blank"></a>
+                <button class="btn btn-sm btn-danger" id="ost4Clear" title="Удалить прикреплённый скан" style="margin-left:auto;">✕</button>
+              </div>
+              <div class="step-hint" id="ohint4" style="display:none;"></div>
+            </fieldset>
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- Горизонтальный ресайзер: меняет высоту нижней зоны -->
+    <div class="resizer horizontal"></div>
+
+    <!-- Нижняя зона: оплаты операции + грузовые позиции -->
+    <div class="panel vertikal">
+
+      <!-- Оплаты по выбранной операции -->
+      <div class="table-panel">
+        <div class="toolbar">
+          <h3 class="table-title" id="oplTableTitle">Оплаты по выбранной операции</h3>
+          <div class="toolbar-btns">
+            <button class="btn btn-primary" id="btnOplAdd" title="Новая оплата (режим создания)" disabled>➕</button>
+            <button class="btn btn-success" id="btnOplSave" title="Сохранить оплату" disabled>💾</button>
+            <button class="btn btn-danger" id="btnOplDel" title="Удалить оплату" disabled>✖</button>
+          </div>
+        </div>
+        <div id="oplTable" class="vtable-container"></div>
+      </div>
+
+      <!-- Вертикальный ресайзер: меняет ширину таблицы позиций -->
+      <div class="resizer"></div>
+
+      <!-- Грузовые позиции выбранной операции -->
+      <div class="table-panel">
+        <div class="toolbar">
+          <h3 class="table-title">Грузовые позиции операции</h3>
+          <div class="toolbar-btns">
+            <button class="btn btn-success" id="btnPrivyazat" title="Привязать отмеченные позиции к выбранной оплате и указать части суммы платежки" disabled>🔗 Привязать</button>
+            <button class="btn" id="btnOtvyazat" title="Снять привязку отмеченных позиций у выбранной платежки" disabled>🔓 Снять привязку</button>
+          </div>
+        </div>
+        <div id="pozTable" class="vtable-container"></div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<!-- ✅ T104/T105: модалка распределения суммы платежки по грузовым позициям
+     (T105: сравнение «Распределено X из Y» — без НДС; предзаполнение сумм по типу платежа) -->
+<div id="raspModal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <h4>Распределение суммы платежки по грузовым позициям</h4>
+    <div id="raspDocInfo" class="rasp-docinfo"></div>
+    <div id="raspOtherInfo" class="rasp-otherinfo"></div>
+    <div id="raspPrefillInfo" class="rasp-otherinfo" style="color:#1a7f37;"></div>
+    <div class="rasp-head">
+      <div>№ чертежа</div>
+      <div>Наименование</div>
+      <div class="rasp-kolvo" title="Количество в грузовой позиции">Кол-во</div>
+      <div class="rasp-kolvo" title="Стоимость планового количества, ₽ (кол-во по заказу × цена КП)">Стоимость ₽</div>
+      <div class="rasp-kolvo" title="Оплачено позиции другими платежками, ₽ (без текущей)">Оплачено ₽</div>
+      <div class="rasp-sum" title="Часть суммы платежки, относящаяся к позиции, ₽ (без НДС)">Сумма ₽</div>
+    </div>
+    <div id="raspRows"></div>
+    <div id="raspTotal" class="rasp-total"></div>
+    <div class="modal-btns">
+      <button class="btn" id="raspAutofill" title="✅ T105: пересчитать суммы по типу платежа — аванс: Стоимость ₽ × % аванса договора (predoplata_pr); окончательный расчёт: Стоимость ₽ − оплачено по позиции">⟳ Автозаполнение</button>
+      <button class="btn btn-success" id="raspOk" title="Применить распределение">✔ OK</button>
+      <button class="btn" id="raspCancel" title="Отменить распределение">✖ Отмена</button>
+    </div>
+  </div>
+</div>
+
+<!-- ✅ T106: скрытые файловые input'ы шагов 1 и 4 (только PDF) -->
+<input type="file" id="fileOplDoc" accept=".pdf,application/pdf" hidden>
+<input type="file" id="fileOplReestr" accept=".pdf,application/pdf" hidden>
+
+<script type="module" src="../js/app-payment.js"></script>
+</body>
+</html>

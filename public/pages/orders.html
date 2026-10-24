@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Заказы по договорам</title>
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="../resizer.css">
+  <style id="ordersStepsStyles">
+    /* ===== Панель 5 последовательных шагов (эталон) ===== */
+    .steps-panel { flex: 1; min-height: 0; overflow-y: auto; padding: 6px; display: flex; flex-direction: column; gap: 6px; border-top: 1px solid #d0d7de; }
+    .step-fs { flex-shrink: 0; border: 1px solid #c3ccd6; border-radius: 6px; padding: 6px 8px 8px; margin: 0; min-width: 0; background: #fafcfe; }
+    .step-fs legend { font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; padding: 0 4px; color: #1a2733; }
+    .step-badge { display: inline-flex; width: 18px; height: 18px; border-radius: 50%; align-items: center; justify-content: center; color: #fff; font-size: 11px; font-weight: 700; background: #9aa2ad; flex-shrink: 0; }
+    .step-badge.done { background: #2e9e44; }
+    .step-badge.active { background: #e08a00; }
+    /* ✅ T32: отправка неактуальна — состав заказа менялся после отправки */
+    .step-badge.stale { background: #d92b2b; }
+    .stale-word { color: #d92b2b; font-weight: 700; }
+    .step-fs.blocked { opacity: .55; background: #f2f3f5; }
+    .step-row { display: flex; align-items: center; gap: 6px; margin: 4px 0 0; min-width: 0; }
+    .step-label { font-size: 11px; color: #5b6773; flex-shrink: 0; min-width: 108px; text-align: right; }
+    .step-input { flex: 1; min-width: 0; }
+    .step-input[readonly] { background: #eef1f4; color: #333; }
+    .file-link { font-size: 11px; color: #0e6bb8; text-decoration: underline; word-break: break-all; }
+    .file-link:hover { color: #0a5a9c; }
+    /* ✅ T20: комбобокс «Email» шага 1 — множественный выбор адресов через «;» */
+    .step-combo { flex: 1; min-width: 0; position: relative; }
+    .step-combo input { width: 100%; box-sizing: border-box; padding-right: 26px; }
+    /* ✅ T21: кнопка развернуть/свернуть списка (как у стандартного селекта) */
+    .step-combo .combo-toggle {
+      position: absolute; right: 2px; top: 50%; transform: translateY(-50%);
+      width: 22px; height: calc(100% - 4px); border: none; background: transparent;
+      cursor: pointer; color: #5b6773; font-size: 10px; line-height: 1; padding: 0;
+      display: flex; align-items: center; justify-content: center; z-index: 2;
+    }
+    .step-combo .combo-toggle:hover { background: #e2e9f0; border-radius: 3px; }
+    .step-combo .combo-list {
+      position: absolute; top: 100%; left: 0; right: 0; z-index: 60;
+      background: #fff; border: 1px solid #c8d0d8; border-top: none;
+      max-height: 200px; overflow-y: auto; box-shadow: 0 6px 16px rgba(0,0,0,.18);
+    }
+    .step-combo .combo-item { padding: 5px 8px; cursor: pointer; font-size: 12px; display: flex; gap: 6px; align-items: center; }
+    .step-combo .combo-item:hover { background: #eef4fb; }
+    .step-combo .combo-item.selected { background: #e8f4e8; }
+    .step-combo .combo-item .em-mark { width: 14px; flex-shrink: 0; text-align: center; color: #2e9e44; font-weight: 700; }
+    .step-combo .combo-item .em-extra { color: #8a94a0; font-size: 11px; margin-left: auto; padding-left: 8px; }
+    .step-combo .combo-empty { padding: 6px 8px; font-size: 11px; color: #8a94a0; }
+    .step-hint { font-size: 10px; color: #b3541e; margin: 2px 0 0 114px; }
+    /* ===== Блок статуса позиции ===== */
+    .poz-status-fs legend { color: #1a2733; font-weight: 600; }
+    /* ===== Модальное окно договора ===== */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(20,30,40,.45); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+    .modal-overlay.hidden { display: none; }
+    .modal-box { background: #fff; border-radius: 8px; padding: 18px 22px; width: 380px; box-shadow: 0 8px 30px rgba(0,0,0,.25); }
+    .modal-box h3 { margin: 0 0 12px; font-size: 15px; }
+    .modal-box label { display: block; font-size: 12px; color: #444; margin-bottom: 10px; }
+    .modal-box input { width: 100%; box-sizing: border-box; margin-top: 3px; }
+    .modal-btns { display: flex; gap: 8px; justify-content: flex-end; }
+  </style>
+</head>
+<body>
+<div class="app">
+  <header class="app-header">
+    <h1>📋 Заказы по договорам</h1>
+    <div id="toast" class="toast hidden"></div>
+    <div id="wsStatus" class="ws-status disconnected">⚫ Offline</div>
+  </header>
+
+  <!-- Верхняя панель: фильтры для ЗАКАЗОВ -->
+  <div class="filter-panel">
+      <div class="filter-row">
+
+          <div class="filter-item">
+              <label>Год</label>
+              <input type="text" id="fltGod" value="2026">
+          </div>
+
+          <div class="filter-item">
+              <label>№ заказа</label>
+              <input type="text" id="fltNomerZakaz" placeholder="Поиск...">
+          </div>
+
+          <div class="filter-item">
+              <label>№ запроса</label>
+              <input type="text" id="fltNomerZaprosa" placeholder="Поиск...">
+          </div>
+
+          <!-- ✅ T93: фильтр «№ запроса» для списка заказов -->
+
+          <div class="filter-item">
+              <label>Фирма</label>
+              <!-- ✅ T99: связан с fltDogovor -->
+              <select id="fltFirma" title="Выбор фирмы сужает список договоров; «Все фирмы» сбрасывает оба фильтра">
+                  <option value="">Все фирмы</option>
+              </select>
+          </div>
+
+          <div class="filter-item">
+              <label>Договор</label>
+              <!-- ✅ T99: связан с fltFirma -->
+              <select id="fltDogovor" title="Выбор договора подставляет его фирму; «Все договоры» сбрасывает оба фильтра">
+                  <option value="">Все договоры</option>
+              </select>
+          </div>
+
+          <div class="filter-item">
+              <label>Статус</label>
+              <select id="fltStatys">
+                  <option value="">Все статусы</option>
+                  <option value="__empty__">Без статуса</option>
+                  <option value="На согласовании контрагента">На согласовании</option>
+                  <option value="Согласовано">Согласовано</option>
+                  <option value="Оригинал отправлен">Оригинал отправлен</option>
+                  <option value="Оригинал получен">Оригинал получен</option>
+              </select>
+          </div>
+
+          <div class="filter-actions">
+              <button class="btn" id="btnClearAllZakazFilters">Х</button>
+          </div>
+
+      </div>
+  </div>
+
+  <div class="panel vertikal">
+    <!-- ЛЕВАЯ ПАНЕЛЬ: Список заказов + 5 последовательных шагов -->
+    <div class="table-panel" style="display: flex; flex-direction: column;">
+      <div class="toolbar">
+        <h3 class="table-title">Список заказов</h3>
+        <div class="toolbar-btns">
+           <button class="btn btn-success" id="btnGenerateOrders"> 📊 Создать заказы по лучшим КП</button>
+          <button class="btn btn-primary" id="btnZakazAdd" title="Добавить" disabled>➕</button>
+          <button class="btn btn-success" id="btnZakazSave" title="Сохранить" disabled>💾</button>
+          <button class="btn btn-danger" id="btnZakazDel" title="Удалить" disabled>✖</button>
+        </div>
+      </div>
+      <div id="zakazTable" class="vtable-container" style="height: 190px; flex-shrink: 0;"></div>
+
+      <!-- 5 ПОСЛЕДОВАТЕЛЬНЫХ ШАГОВ -->
+      <div id="stepsPanel" class="steps-panel">
+        <fieldset class="step-fs" id="step1">
+          <legend><span class="step-badge" id="badge1">1</span> Отправка на согласование контрагенту <span class="stale-word" id="st1StaleWord" style="display:none;">неактуальна</span></legend>
+          <div class="step-row">
+            <label class="step-label">ДАТА:</label>
+            <input id="st1Data" class="step-input" readonly placeholder="не отправлялось">
+            <button class="btn btn-sm btn-danger" id="st1Clear" title="Сбросить отправку">✕</button>
+          </div>
+          <div class="step-row">
+            <label class="step-label">Email:</label>
+            <!-- ✅ T20: комбобокс Email — множественный выбор через «;» -->
+            <div class="combo step-combo" id="st1EmailCombo">
+              <input type="text" id="st1Email" class="step-input" autocomplete="off"
+                     placeholder="— выберите из списка (можно несколько) или введите адреса через ; —">
+              <button type="button" class="combo-toggle" id="st1EmailToggle" tabindex="-1" title="Развернуть/свернуть список">▾</button>
+              <div class="combo-list" id="st1EmailList" hidden></div>
+            </div>
+            <!-- ✅ T98: кнопка открывает предпросмотр письма (кому/копии/текст/вложение) -->
+            <button class="btn btn-sm btn-primary" id="st1Send" title="Предпросмотр письма (кому, копии, текст, вложение) и отправка">✉ ➜</button>
+          </div>
+          <div class="step-hint" id="hint1" style="display:none;"></div>
+        </fieldset>
+
+        <fieldset class="step-fs blocked" id="step2">
+          <legend><span class="step-badge" id="badge2">2</span> Решение контрагента по заказу</legend>
+          <div class="step-row">
+            <label class="step-label">Решение:</label>
+            <input id="st2Reshenie" class="step-input" placeholder="не прорабатывался">
+          </div>
+          <div class="step-row">
+            <label class="step-label">Дата ответа:</label>
+            <input id="st2DataOtv" type="datetime-local" class="step-input">
+            <button class="btn btn-sm" id="st2Print" title="Предпросмотр заказа (Excel) и печать"><!-- ✅ T98 --></button>
+          </div>
+          <div class="step-row">
+            <button class="btn btn-sm" id="st2Attach">📎 Прикрепить решение контрагента</button>
+            <a id="st2File" class="file-link hidden" target="_blank"></a>
+            <button class="btn btn-sm btn-danger" id="st2Clear" title="Откатить шаг 2: удалить прикреплённый файл решения, текст решения и дату ответа" style="margin-left:auto;">✕ Очистить</button>
+          </div>
+          <div class="step-hint" id="hint2" style="display:none;"></div>
+        </fieldset>
+
+        <fieldset class="step-fs blocked" id="step4">
+          <!-- ✅ T51: бывший шаг 4 (шаг 3 «Согл. структур. подр. АВТОВАЗ» перенесён на
+               страницу «Внесение коммерческих предложений»); id DOM сохранены -->
+          <legend><span class="step-badge" id="badge4">3</span> Согл. заказа директором</legend>
+          <div class="step-row">
+            <label class="step-label">Передано в приемную:</label>
+            <input id="st4Peredano" type="date" class="step-input">
+            <button class="btn btn-sm" id="st4Print" title="Предпросмотр заказа (Excel) и печать"><!-- ✅ T98 --></button>
+          </div>
+          <div class="step-row">
+            <label class="step-label">Дата подписания:</label>
+            <input id="st4Podpis" type="date" class="step-input" placeholder="не подписан">
+          </div>
+          <div class="step-row">
+            <button class="btn btn-sm" id="st4Attach">📎 Прикрепить подписанный скан заказа</button>
+            <a id="st4File" class="file-link hidden" target="_blank"></a>
+          </div>
+          <div class="step-hint" id="hint4" style="display:none;"></div>
+        </fieldset>
+
+        <fieldset class="step-fs blocked" id="step5">
+          <legend><span class="step-badge" id="badge5">4</span> Даты подписания оригинала заказа контрагентом</legend>
+          <div class="step-row">
+            <label class="step-label">1. Отправлено:</label>
+            <input id="st5Go" type="date" class="step-input">
+            <label class="step-label" style="min-width:auto;">2. Получено:</label>
+            <input id="st5Pol" type="date" class="step-input">
+          </div>
+          <div class="step-hint" id="hint5" style="display:none;"></div>
+        </fieldset>
+      </div>
+    </div>
+
+    <!-- Вертикальный ресайзер -->
+    <div class="resizer"></div>
+
+    <!-- ПРАВАЯ ПАНЕЛЬ: Форма заказа + позиции -->
+    <div class="form-panel form-wide" style="display: flex; flex-direction: column;">
+      <!-- Форма заказа -->
+      <fieldset style="flex-shrink: 0;">
+        <legend>Параметры заказа к договору</legend>
+        <div class="form-grid cols-3">
+          <label>№ заказа
+            <input id="zNomer" type="text">
+          </label>
+          <label>от
+            <input id="zData" type="date">
+          </label>
+          <label>Договор
+            <select id="zDogovor">
+              <option value="">— Выберите договор —</option>
+            </select>
+          </label>
+        </div>
+        <div class="form-grid cols-2" style="margin-top: 6px; align-items: end;">
+          <label>СТАТУС ЗАКАЗА (устанавливается автоматически):
+            <input id="zStatys" type="text" readonly style="color: var(--primary); font-weight: 600;">
+          </label>
+        </div>
+        <div class="form-grid cols-3" style="margin-top: 6px; font-size: 11px; align-items: center;">
+          <div>📧 Отправлено: <span id="zDataEmail" style="color: var(--muted);">не отправлялось</span></div>
+          <div>📨 Решение: <span id="zDataOtv" style="color: var(--muted);">не согласовано</span></div>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <button class="btn btn-sm" id="btnEditDogovor" title="Редактировать договор этого заказа">Ред. договора</button>
+            <span>✉️ Email: <span id="zEmail" style="color: var(--muted);">не отправлено</span></span>
+          </div>
+        </div>
+      </fieldset>
+
+      <!-- Блок статуса выбранной позиции (эталон: СТАТУС ПОЗ.) -->
+      <fieldset class="poz-status-fs" style="flex-shrink: 0;">
+        <legend>Решения принятые по оснастке заказа</legend>
+        <div class="form-grid cols-2">
+          <label>№ чертежа и наименование:
+            <input id="pozInfo" type="text" readonly placeholder="— позиция не выбрана —">
+          </label>
+          <label>СТАТУС ПОЗ.:
+            <select id="pozStatus" disabled>
+              <option value="формирование списка поз. заказа">формирование списка поз. заказа</option>
+              <option value="на рассмотрении">на рассмотрении</option>
+              <option value="согласовано">согласовано</option>
+              <option value="отказ фирмы">отказ фирмы</option>
+              <option value="отказ УЭБ">отказ УЭБ</option>
+            </select>
+          </label>
+        </div>
+      </fieldset>
+
+      <div class="panel gorizont" style="flex: 1; min-height: 0;">
+
+        <!-- Позиции заказа -->
+        <div style="flex: 1; min-height: 0; display: flex; flex-direction: column; margin-top: 10px;">
+          <div class="toolbar" style="flex-shrink: 0;">
+            <h3 class="table-title">Позиции заказа к договору</h3>
+            <div class="toolbar-btns">
+              <button class="btn btn-sm" id="btnAddPosition" title="Добавить" disabled>⬆</button>
+              <button class="btn btn-sm" id="btnDelPosition" title="Удалить" disabled>⬇</button>
+              <button class="btn btn-sm" id="btnPrintExcel" title="Предпросмотр Excel и печать" disabled>📄</button><!-- ✅ T98 -->
+            </div>
+          </div>
+          <div id="poziciiTable" class="vtable-container" style="flex: 1; min-height: 0;"></div>
+        </div>
+        <!-- Горизонтальный ресайзер -->
+        <div class="resizer horizontal"></div>
+        <!-- Доступные позиции -->
+        <div style="height: 200px; flex-shrink: 0; margin-top: 10px; display: flex; flex-direction: column;">
+          <div class="toolbar" style="flex-shrink: 0;">
+            <h3 class="table-title">Доступные позиции плана</h3>
+
+          </div>
+          <div id="availableTable" class="vtable-container" style="flex: 1; min-height: 0;"></div>
+            <!-- Фильтры для доступных позиций -->
+            <div class="filter-section">
+              <div style="display: flex; gap: 2px; align-items: center; flex-wrap: wrap;">
+                <label class="filter-label">№ чертежа:</label>
+                <input type="text" id="fltNomerChertezha" class="filter-input" style="max-width: 150px;" placeholder="Поиск...">
+
+                <label class="filter-label">Наименование:</label>
+                <input type="text" id="fltNaimenovanie" class="filter-input" style="max-width: 200px;" placeholder="Поиск...">
+                <button class="filter-clear" id="btnClearAllAvailFilters" title="Сбросить">×</button>
+
+              </div>
+            </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Скрытые файловые input'ы для «Прикрепить...» -->
+<input type="file" id="fileReshenie" hidden>
+<input type="file" id="fileScan" hidden>
+
+<!-- Модальное окно редактирования договора -->
+<div id="dogovorModal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <h3>Редактирование договора</h3>
+    <label>№ договора
+      <input id="dgNom" type="text">
+    </label>
+    <label>Дата договора
+      <input id="dgData" type="date">
+    </label>
+    <div class="modal-btns">
+      <button id="dgClose" class="btn">Отмена</button>
+      <button id="dgSave" class="btn btn-primary">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="../js/app-orders.js"></script>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Ответственные технологи</title>
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="../resizer.css">
+</head>
+<body>
+<div class="app">
+  <header class="app-header">
+    <h1>👨‍🔬 Ответственные технологи по цехам</h1>
+    <div id="toast" class="toast hidden"></div>
+    <div id="wsStatus" class="ws-status disconnected">⚫ Offline</div>
+  </header>
+
+  <main class="content" style="padding: 8px;">
+    <div class="panel osnastka-panel">
+      <!-- ===== ЛЕВАЯ ПАНЕЛЬ: Фильтры + Таблица ===== -->
+      <div class="table-panel">
+        <!-- Блок фильтров -->
+        <div class="filter-section">
+          <div class="filter-row">
+            <label class="filter-label">ФИО технолога:</label>
+            <input type="text" id="fltFio" class="filter-input" placeholder="Поиск...">
+            <button class="filter-clear" id="btnClearFio" title="Очистить">×</button>
+          </div>
+          <div class="filter-row">
+            <label class="filter-label">E-mail:</label>
+            <input type="text" id="fltEmail" class="filter-input" placeholder="Поиск...">
+            <button class="filter-clear" id="btnClearEmail" title="Очистить">×</button>
+          </div>
+          <div class="filter-row">
+            <label class="filter-label">Телефон:</label>
+            <input type="text" id="fltTelefon" class="filter-input" placeholder="Поиск...">
+            <button class="filter-clear" id="btnClearTelefon" title="Очистить">×</button>
+          </div>
+          <div class="filter-row">
+            <label class="filter-label">Тип оснастки:</label>
+            <input type="text" id="fltTip" class="filter-input" placeholder="Поиск...">
+            <button class="filter-clear" id="btnClearTip" title="Очистить">×</button>
+          </div>
+          <button class="btn btn-sm" id="btnClearAllFilters">Сбросить все фильтры</button>
+        </div>
+
+        <!-- Toolbar таблицы -->
+        <div class="toolbar">
+          <h3 class="table-title">Технологи <span class="hint">клик по заголовку — новая запись</span></h3>
+          <div class="toolbar-btns">
+            <button class="btn btn-primary" id="btnTechAdd" data-crud="add" title="Добавить" disabled>➕</button>
+            <button class="btn btn-success" id="btnTechSave" data-crud="save" title="Сохранить" disabled>💾</button>
+            <button class="btn btn-danger"  id="btnTechDel" data-crud="del" title="Удалить" disabled>✖</button>
+            <button class="btn" id="btnTechPaste" data-crud="paste" title="Вставить из буфера">📋</button>
+          </div>
+        </div>
+
+        <!-- Виртуальная таблица -->
+        <div id="techTable" class="vtable-container"></div>
+      </div>
+
+      <!-- Вертикальный ресайз -->
+      <div class="resizer"></div>
+
+      <!-- ===== ПРАВАЯ ПАНЕЛЬ: Форма ===== -->
+      <div class="form-panel form-wide">
+        <h4 id="techFormTitle">Данные технолога</h4>
+        <fieldset>
+          <legend>Основная информация</legend>
+          <div class="form-grid cols-2">
+            <label style="grid-column: 1/-1">ФИО технолога *
+              <input id="tFio" type="text" placeholder="Чесноков Игорь Иванович">
+            </label>
+            <label>E-mail
+              <input id="tEmail" type="email" placeholder="igor.chesnokov@vaz.ru">
+            </label>
+            <label>Телефон
+              <input id="tTelefon" type="text" placeholder="89276135046">
+            </label>
+            <label style="grid-column: 1/-1">Тип оснастки
+              <input id="tTip" type="text" placeholder="штампы, пресформы, кузнечная...">
+            </label>
+          </div>
+        </fieldset>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script type="module" src="../js/app-tech.js"></script>
+</body>
+</html>

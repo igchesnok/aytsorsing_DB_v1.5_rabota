@@ -1,0 +1,6 @@
+{
+  "executable_path": "C:\\Program Files\\Yandex\\YandexBrowser\\Application\\browser.exe",
+  "window_size": "1280,1000",
+  "headless": false,
+  "timeout_ms": 20000
+}

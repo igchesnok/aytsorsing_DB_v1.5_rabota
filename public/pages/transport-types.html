@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Типы перевозок</title>
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="../resizer.css">
+</head>
+<body>
+<div class="app">
+  <header class="app-header">
+    <h1>📦 Типы перевозок</h1>
+    <div id="toast" class="toast hidden"></div>
+    <div id="wsStatus" class="ws-status disconnected">⚫ Offline</div>
+  </header>
+
+  <main class="content" style="padding: 8px;">
+    <div class="panel osnastka-panel">
+      <!-- ===== ЛЕВАЯ ПАНЕЛЬ: Фильтры + Таблица ===== -->
+      <div class="table-panel">
+        <!-- Блок фильтров -->
+        <div class="filter-section">
+          <div class="filter-row">
+            <label class="filter-label">ID типа:</label>
+            <input type="text" id="fltIdTipa" class="filter-input" placeholder="OUT_BL, IN_PF...">
+            <button class="filter-clear" id="btnClearIdTipa" title="Очистить">×</button>
+          </div>
+          <div class="filter-row">
+            <label class="filter-label">Название операции:</label>
+            <input type="text" id="fltNazvanie" class="filter-input" placeholder="Поиск...">
+            <button class="filter-clear" id="btnClearNazvanie" title="Очистить">×</button>
+          </div>
+          <div class="filter-row">
+            <label class="filter-label">Направление:</label>
+            <select id="fltNapravlenie" class="filter-input">
+              <option value="">Все</option>
+              <option value="Входящая">Входящая</option>
+              <option value="Исходящая">Исходящая</option>
+            </select>
+            <button class="filter-clear" id="btnClearNapravlenie" title="Очистить">×</button>
+          </div>
+          <button class="btn btn-sm" id="btnClearAllFilters">Сбросить все фильтры</button>
+        </div>
+
+        <!-- Toolbar таблицы -->
+        <div class="toolbar">
+          <h3 class="table-title">Типы перевозок <span class="hint">клик по заголовку — новая запись</span></h3>
+          <div class="toolbar-btns">
+          <button class="btn btn-primary" id="btnTTAdd"  data-crud="add"  title="Добавить" disabled>➕</button>
+          <button class="btn btn-success" id="btnTTSave" data-crud="save" title="Сохранить" disabled>💾</button>
+          <button class="btn btn-danger"  id="btnTTDel"  data-crud="del"  title="Удалить" disabled>✖</button>
+          </div>
+        </div>
+
+        <!-- Виртуальная таблица -->
+        <div id="ttTable" class="vtable-container"></div>
+      </div>
+
+      <!-- Вертикальный ресайз -->
+      <div class="resizer"></div>
+
+      <!-- ===== ПРАВАЯ ПАНЕЛЬ: Форма ===== -->
+      <div class="form-panel form-wide">
+        <h4 id="ttFormTitle">Тип перевозки</h4>
+        <fieldset>
+          <legend>Идентификатор (бизнес-ключ)</legend>
+          <div class="form-grid">
+            <label style="grid-column: 1/-1">
+              ID типа перевозки *
+              <input id="ttIdTipa" type="text" placeholder="OUT_BL, IN_PF, OUT_GOOD..."
+                     style="font-family: 'Consolas', monospace; text-transform: uppercase;">
+              <span id="idTipaHint" class="hint"></span>
+            </label>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Операция</legend>
+          <div class="form-grid cols-2">
+            <label style="grid-column: 1/-1">Название операции *
+              <input id="ttNazvanie" type="text" placeholder="Отправка заготовки">
+            </label>
+            <label>Направление *
+              <select id="ttNapravlenie">
+                <option value="">— выберите —</option>
+                <option value="Входящая">Входящая</option>
+                <option value="Исходящая">Исходящая</option>
+              </select>
+            </label>
+           <div style="margin-top: 8px; padding: 6px 10px; background: #f6f8fa; border-radius: 4px; font-size: 11px; color: var(--muted);">
+			  💡 Поле «Учёт в остатке» вычисляется автоматически по направлению:
+			  <b>Входящая = -1</b>, <b>Исходящая = +1</b>. Используется в расчётах прихода/расхода/остатка.
+			</div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Подсказка по бизнес-логике</legend>
+          <div style="font-size: 11px; color: var(--muted); line-height: 1.6;">
+            <b>Исходящие (учёт +1):</b> OUT_BL, OUT_PF, OUT_DEF, OUT_TO, OUT_REW<br>
+            <b>Входящие (учёт -1):</b> IN_PF, IN_GOOD, IN_TO<br>
+            ID используется в маршрутах и транспортных операциях.
+          </div>
+        </fieldset>
+      </div>
+    
+	</div>
+  </main>
+</div>
+
+<script type="module" src="../js/app-transport-types.js"></script>
+</body>
+</html>

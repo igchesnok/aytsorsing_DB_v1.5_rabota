@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>План перевозок</title>
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="../resizer.css">
+</head>
+<body>
+
+<div class="app">
+  <header class="app-header">
+    <h1>📋 План перевозок</h1>
+    <div id="toast" class="toast hidden"></div>
+    <div id="wsStatus" class="ws-status disconnected">⚫ Offline</div>
+  </header>
+
+  <!-- Верхняя панель: направление -->
+  <div class="toolbar" style="padding: 10px 14px; background: #e6f3ff; border-bottom: 1px solid var(--border);">
+    <div style="display: flex; gap: 20px; align-items: center;">
+      <label style="font-weight: 600;">Направление:</label>
+
+      <label class="chk">
+        <input type="radio" name="direction" value="Исходящая" checked>
+        Исходящая (отправка)
+      </label>
+
+      <label class="chk">
+        <input type="radio" name="direction" value="Входящая">
+        Входящая (получение)
+      </label>
+    </div>
+  </div>
+
+  <!-- Внешняя вертикальная раскладка: рабочая область + нижняя таблица -->
+  <div class="panel gorizont">
+
+    <!-- Верхняя область -->
+    <main class="content" style="padding: 8px;">
+
+      <!-- Внутренняя горизонтальная раскладка: таблица + форма -->
+      <div class="panel vertikal">
+
+        <!-- Таблица текущего плана -->
+        <div class="table-panel">
+          <div class="toolbar">
+            <h3 class="table-title">Текущий план перевозок</h3>
+
+            <div class="toolbar-btns">
+              <button class="btn btn-primary" id="btnPPAdd" title="Добавить" disabled>➕</button>
+              <button class="btn btn-success" id="btnPPSave" title="Сохранить" disabled>💾</button>
+              <button class="btn btn-danger" id="btnPPDel" title="Удалить" disabled>✖</button>
+            </div>
+          </div>
+
+          <!-- ✅ T50: заявки с грузовыми позициями скрыты из списка (замок количеств) -->
+          <div style="font-size: 11px; color: #8a8f98; padding: 0 8px 4px; line-height: 1.35;">
+            Заявки, уже размещённые в рейсах (есть грузовые позиции), скрыты — их количество
+            зафиксировано партиями. Править количество можно после удаления партий заявки из рейса.
+          </div>
+
+          <div id="ppTable" class="vtable-container"></div>
+        </div>
+
+        <!-- Вертикальный ресайзер: меняет ширину формы -->
+        <div class="resizer"></div>
+
+        <!-- Форма редактирования -->
+        <div class="form-panel form-wide">
+          <h4 id="ppFormTitle">План перевозки</h4>
+
+          <fieldset>
+            <legend>Основная информация</legend>
+
+            <div class="form-grid cols-2">
+              <label>
+                Плановая дата *
+                <input id="ppPlanDate" type="date">
+              </label>
+
+              <label style="grid-column: 1 / -1">
+                Основание перевозки
+                <input id="ppDogOsnov" type="text" placeholder="№ договора или документа">
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Количество</legend>
+
+            <div class="form-grid cols-2">
+              <label>
+                Годные, шт *
+                <input id="ppKolvoNoBr" type="number" min="0" value="0">
+              </label>
+
+              <label>
+                Брак, шт
+                <input id="ppKolvoYesBr" type="number" min="0" value="0">
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Статус</legend>
+
+            <select id="ppStatys" style="width: 100%; padding: 6px; border: 1px solid var(--border); border-radius: 4px;">
+              <option value="">Не назначено</option>
+              <option value="Ожидает перевозки">Ожидает перевозки</option>
+              <option value="В пути">В пути</option>
+              <option value="Перевозка выполнена">Перевозка выполнена</option>
+            </select>
+          </fieldset>
+
+          <div id="ppInfo" style="margin-top: 10px; padding: 10px; background: #f6f8fa; border-radius: 4px; font-size: 11px;">
+            <div><b>№ чертежа:</b> <span id="infoNomerChertezha">—</span></div>
+            <div><b>Наименование:</b> <span id="infoNaimenovanie">—</span></div>
+            <div><b>№ этапа:</b> <span id="infoNomShag">—</span></div>
+            <div><b>Тип перевозки:</b> <span id="infoTipPerevozki">—</span></div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- Горизонтальный ресайзер: меняет высоту нижней таблицы -->
+    <div class="resizer horizontal"></div>
+
+    <!-- Нижняя область -->
+    <div class="table-panel">
+      <div class="toolbar">
+        <h3 class="table-title">Доступные позиции для добавления</h3>
+        <label style="display: flex; align-items: center; gap: 6px; margin-left: auto; margin-right: 12px;">
+          Тип перевозки:
+          <select id="ppTipPerevozki" style="padding: 4px 6px; border: 1px solid var(--border); border-radius: 4px; background: #fff;"></select>
+        </label>
+        <button class="btn btn-success" id="btnBulkAdd">➕ Добавить выбранные</button>
+      </div>
+      <div id="availableTable" class="vtable-container"></div>
+    </div>
+
+  </div>
+</div>
+
+<script type="module" src="../js/app-plan-perevozok.js"></script>
+</body>
+</html>

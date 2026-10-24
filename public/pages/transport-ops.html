@@ -1,0 +1,660 @@
+<!-- pages/transport-ops.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Редактор транспортных операций</title>
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="../resizer.css">
+  <link rel="stylesheet" href="../tab.css">
+  <link rel="stylesheet" href="../transport-ops.css">
+  <link rel="stylesheet" href="../transport-ops-statys.css">
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <h1>🚛 Редактор транспортных операций</h1>
+      <div id="toast" class="toast hidden"></div>
+      <div id="wsStatus" class="ws-status disconnected">⚫ Offline</div>
+    </header>
+    
+    <!-- Верхняя панель: направление + статус -->
+    <div class="transport-topbar">
+      <div class="transport-topbar-left">
+        <fieldset class="direction-fieldset">
+          <legend>НАПРАВЛЕНИЕ ПЕРЕВОЗКИ</legend>
+          <label class="chk">
+            <input type="radio" name="direction" value="Исходящая" checked>
+            ПТО отправитель
+          </label>
+          <label class="chk">
+            <input type="radio" name="direction" value="Входящая">
+            ПТО получатель
+          </label>
+        </fieldset>
+
+          <!-- ✅ НОВОЕ: Фильтр по фирме -->
+        <fieldset class="status-fieldset">
+          <legend>ФИРМА</legend>
+          <!-- ✅ НОВОЕ: Переключатель режима отображения фирм -->
+          <label class="filter-chk" style="align-self: flex-end; margin-bottom: 4px; margin-left: 10px; white-space: nowrap;">
+            <input type="checkbox" id="chkFirmaWithCargo"> 
+            Только фирмы с доступным грузом
+          </label>
+          <select id="toFirma" style="padding: 4px 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 12px; min-width: 220px;">
+            <option value="">Все фирмы</option>
+          </select>
+            <!-- ✅ НОВОЕ: Фильтр по году договора (от) -->
+          <div style="display: flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 12px;">
+            <label for="contractYearOt" style="white-space: nowrap;">Договора от:</label>
+            <input type="number" id="contractYearOt"
+                  min="1926" max="2026" value="2026" step="1"
+                  class="contract-year-input"/>             
+            <label for="contractYearDo" style="white-space: nowrap;">до:</label>
+            <input type="number" id="contractYearDo"
+                  min="1926" max="2026" value="2026" step="1"
+                  class="contract-year-input"/>
+          </div>
+        </fieldset>
+
+        <fieldset class="status-fieldset" >
+          <legend>СТАТУС</legend>
+          <select id="fltStatus" style="padding: 4px 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 12px;">
+            <option value="">Все</option>
+            <option value="Ожидает отправки" class="status-waiting">🟠 Ожидает отправки</option>
+            <option value="Подготовка к отгрузке" class="status-waiting">🟠 Подготовка к отгрузке</option>
+            <option value="В пути" class="status-transit">🟡 В пути</option>
+            <option value="Выполнена" class="status-completed">🟢 Выполнена</option>
+            <option value="Ожидает прибытия" class="status-waiting">🟠 Ожидает прибытия</option>
+            <option value="Подготовка к прибытию" class="status-waiting">🟠 Подготовка к прибытию</option>
+          </select>
+        </fieldset>
+      </div>
+      <div id="toStatusBlok" class="transport-topbar-right">
+        <!-- ✅ НОВОЕ: Фильтр по статусу -->
+          <label style="font-weight: 600; color: var(--primary);">СТАТУС ТРАНСПОРТНОЙ ОПЕРАЦИИ:</label>
+          <label id="toStatus" style="width: 200px; font-weight: 600;   border: 1px ;
+  border-radius: 6px;padding: 4px;  text-align: center; display: inline-block;"></label>
+      </div>
+    </div>
+    
+
+      
+      <!-- ВЕРХНЯЯ ЧАСТЬ: список операций + форма с вкладками -->
+      <div class="panel vertikal">
+        
+        <!-- ЛЕВАЯ ПАНЕЛЬ: Список транспортных операций -->
+        <div class="table-panel">
+          <div class="toolbar">
+            <h3 class="table-title">СПИСОК ТРАНСПОРТНЫХ ОПЕРАЦИЙ</h3>
+          </div>
+          <div id="operTable" class="vtable-container"></div>
+        </div>
+        
+        <!-- Вертикальный ресайзер -->
+        <div class="resizer"></div>
+        
+        <!-- ПРАВАЯ ПАНЕЛЬ: Форма с вкладками -->
+        <div class="form-panel form-wide transport-form">
+          
+          <!-- ВКЛАДКИ -->
+          
+          <nav class="tabs">
+            <button class="tab active" data-tab="tabZakazchik">ЗАКАЗЧИК</button>
+            <button class="tab" data-tab="tabFirma" id="tabFirmaBtn">ПОЛУЧАТЕЛЬ</button>
+            <button class="tab" data-tab="tabDetali">ДЕТАЛИ ГРУЗА</button>
+            <button class="tab" data-tab="tabParametry">ПАРАМЕТРЫ ПЕРЕВОЗКИ</button>
+            <button class="tab" data-tab="tabDokumenty">ДОКУМЕНТЫ</button>
+            <button class="tab" data-tab="tabVoditel">ДАННЫЕ О ВОДИТЕЛЕ</button>
+            
+          </nav>
+          
+          <!-- КОНТЕНТ ВКЛАДОК -->
+          <div class="content">
+            
+            <!-- ===== ВКЛАДКА 1: ЗАКАЗЧИК (ПТО) ===== -->
+            <section id="tabZakazchik" class="tab-content active">
+           
+              <fieldset>
+                <legend>ЗАКАЗЧИК ПТО:</legend> <h4></h4>
+                <div class="form-grid">
+                  <label>ФИО ответственного:
+                    <select id="toOtvPTOFIO">
+                      <option value="">— Выберите —</option>
+                    </select>
+                  </label>
+                  <label>ТЕЛ. ответственного:
+                    <input type="text" id="toOtvPTOTel" readonly placeholder="нет данных">
+                  </label>
+                </div>
+              </fieldset>
+              
+              <fieldset>
+                <legend id="lblKontaktnoeLicoPTO">Контактное лицо ПТО на отгрузке</legend>
+                <div class="form-grid">
+                  <label>ФИО ответственного:
+                    <select id="toOtvPogPTOFIO">
+                      <option value="">— Выберите —</option>
+                    </select>
+                  </label>
+                  <label>ТЕЛ. ответственного:
+                    <input type="text" id="toOtvPogPTOTel" readonly placeholder="нет данных">
+                  </label>
+                </div>
+              </fieldset>
+            </section>
+            
+            <!-- ===== ВКЛАДКА 2: ПОЛУЧАТЕЛЬ / ОТПРАВИТЕЛЬ (меняется!) ===== -->
+            <section id="tabFirma" class="tab-content">
+              <h4 id="lblFirmaTitle">Данные о грузополучателе</h4>
+              
+              <fieldset>
+                <legend>Основная информация</legend>
+                <div class="form-grid">
+                  <label style="grid-column: 1/-1">Наименование фирмы:
+                     <input type="text" id="toFirmaSpr" readonly placeholder="нет данных">
+                  </label>
+                  <label style="grid-column: 1/-1">Факт. адрес:
+                    <select id="toAdresPogFirm">
+                      <option value="">— Выберите адрес —</option>
+                    </select>
+                  </label>
+                  <label>Код фирмы АВТОВАЗ:
+                    <input type="text" id="toFirmaKod" readonly placeholder="нет данных">
+                  </label>
+                  <label>ИНН:
+                    <input type="text" id="toFirmaINN" readonly placeholder="нет данных">
+                  </label>
+                  <label style="grid-column: 1/-1">Юр. адрес:
+                    <input type="text" id="toFirmaUrAdres" readonly placeholder="нет данных">
+                  </label>
+                </div>
+              </fieldset>
+              
+              <fieldset>
+                <legend>Контактное лицо</legend>
+                <div class="form-grid">
+                  <label style="grid-column: 1/-1">Контактное лицо:
+                    <select id="toOtvPogFirmFIO">
+                      <option value="">— Выберите —</option>
+                    </select>
+                  </label>
+                  <label>Телефон:
+                    <input type="text" id="toOtvPogFirmTel" readonly placeholder="нет данных">
+                  </label>
+                  <label>e-mail:
+                    <input type="text" id="toOtvPogFirmEmail" readonly placeholder="нет данных">
+                  </label>
+                </div>
+              </fieldset>
+              
+              <button class="btn btn-sm" id="btnEditFirma">✏️ Изменить данные по фирмам</button>
+            </section>
+            
+           <!-- ===== ВКЛАДКА 3: ДЕТАЛИ ГРУЗА ===== -->
+            <section id="tabDetali" class="tab-content">
+              
+              <!-- Вложенная панель для вертикальной раскладки -->
+              <div class="panel gorizont" style="flex: 1; min-height: 0;">
+                
+                <!-- Верхняя таблица: позиции на отправку -->
+                <div class="table-panel">
+                  <div class="toolbar">
+                    <h3 class="table-title" id="lblPozTitle">Список позиций на отправку</h3>
+                    <button class="btn btn-sm" id="btnEditPoz">✏️ Изменить плановые позиции перевозки</button>
+                    <button class="btn btn-sm" id="btnPozParams" title="Тип груза каждой позиции, параметры и расчёт тарных мест">🧮 Тарные места (расчёт)</button>
+                  </div>
+                  <div id="pozTable" class="vtable-container"></div>
+                </div>
+                
+                <!-- Горизонтальный ресайзер -->
+                <div class="resizer horizontal"></div>
+                
+                <!-- Нижняя часть: кнопки + доступные позиции + фильтры -->
+                <div class="table-panel">
+                 
+                  
+                  <!-- Toolbar -->
+                  <div class="toolbar">
+                    <h3 class="table-title" id="lblAvailTitle">Список позиций доступных из плана перевозок к отправке</h3>
+                     
+                    <!-- Кнопки перемещения -->
+                    <div class="transport-move-btns" style="padding: 2px 2px; border-bottom: 1px solid var(--border);">
+                      <button class="btn btn-sm btn-success" id="btnMoveUp" title="Добавить в операцию" disabled>⬆</button>
+                      <button class="btn btn-sm btn-danger" id="btnMoveDown" title="Удалить из операции" disabled>⬇</button>
+                    </div>
+                  </div>
+                  <div id="availableTable" class="vtable-container"></div>
+                  
+                  <!-- Фильтры (внизу) -->
+                  <div class="filter-section"  title="Быстрый поиск по всему списку доступных позиций на перевозку" style="flex-shrink: 0; margin-top: 4px; padding: 8px 10px;">
+                    <div class="filter-row" style="margin-bottom: 0;">
+                      <label class="filter-label"  >Быстрый поиск:</label>
+                      <input type="text" id="fltChertezh" class="filter-input" placeholder="№ чертежа" style="max-width: 150px;">
+                      <input type="text" id="fltNaimenovanie" class="filter-input" placeholder="Наименование" style="max-width: 200px;">
+                      <input type="text" id="fltDogovor" class="filter-input" placeholder="№ договора" style="max-width: 150px;">
+                      <button class="btn btn-sm btn-danger" id="btnClearFilters" title="Сбросить фильтры" style="padding: 4px 10px;">✖</button>
+                    </div>
+                  </div>
+                  
+                </div>
+              </div>
+              
+            </section>
+            
+            <!-- ===== ВКЛАДКА 4: ПАРАМЕТРЫ ПЕРЕВОЗКИ ===== -->
+            <section id="tabParametry" class="tab-content">
+              <h4></h4>
+              <div class="param-grid">
+                
+                <!-- ОТГРУЗКА / ПРИБЫТИЕ -->
+                <fieldset>
+                  <legend id="lblOtruzkaPrib">ОТГРУЗКА</legend>
+                  <div class="form-grid cols-2">
+                    <label>Дата:
+                      <input type="date" id="toOtruzkaData">
+                    </label>
+                    <label>Время:
+                      <input type="text" id="toOtruzkaVremya" placeholder="ЧЧ:ММ">
+                    </label>
+                  </div>
+                </fieldset>
+                
+                <fieldset>
+                  <legend id="lblPribOtruz">ПРИБЫТИЕ</legend>
+                  <div class="form-grid cols-2">
+                    <label>Дата:
+                      <input type="date" id="toPribytieData">
+                    </label>
+                    <label>Время:
+                      <input type="text" id="toPribytieVremya" placeholder="ЧЧ:ММ">
+                    </label>
+                  </div>
+                </fieldset>
+                
+                <fieldset>
+                  <legend>Стоимость перевозки</legend>
+                  <label>Стоимость (без НДС/с НДС):
+                    <input type="text" id="toStoimostPerovozki" placeholder="руб.">
+                  </label>
+                </fieldset>
+                
+                <!-- ✅ T57 ХАРАКТЕРИСТИКИ ГРУЗА: общие поля (кол-во тарных мест,
+                     вес, габариты, объём, штабелируемость, тип груза) УДАЛЕНЫ —
+                     всё живёт в ТАБЛИЦА ТАБЛИЦА тарных мест перевозки (по типам).
+                     Тип груза — персональный атрибут каждой позиции (3 типа).
+                     Кол-во листов/прутков авто-расчёта пишется в Наименование. -->
+                <fieldset style="grid-column: 1 / -1;">
+                  <legend>Характеристики груза</legend>
+                  <div class="form-grid cols-2">
+                    <!-- ✅ T57-d: «Наименование» УБРАНО с вкладки — имя тарного места
+                         теперь задаёт колонка «Тип места» таблицы тарных мест.
+                         Скрытое поле хранит наименование груза для БД/СЗ/М-15. -->
+                    <input type="hidden" id="toGruzName">
+                    <label>Класс опасности:
+                      <input type="text" id="toOpasnostClass">
+                    </label>
+                  </div>
+                  <!-- ✅ T57: ТАРИРОВКА — результат модального «Расчёт тарных мест» -->
+                  <div id="tarnTableBox" class="tarn-table-box" style="margin-top: 10px;"></div>
+                </fieldset>
+                
+                <!-- ЗАТРАТЫ -->
+                <fieldset>
+                  <legend>Затраты</legend>
+                  <div class="form-grid">
+                    <label>ШПЗ:
+                      <select id="toShPZ">
+                        <option value="">—</option>
+                      </select>
+                    </label>
+                    <label>Передел:
+                      <select id="toPeredel">
+                        <option value="">—</option>
+                      </select>
+                    </label>
+                    <label>Сч / Б:
+                      <select id="toSB">
+                        <option value="">—</option>
+                      </select>
+                    </label>
+                    <label>Цех:
+                      <input type="text" id="toCexIzgot">
+                    </label>
+                    <label style="grid-column: 1/-1">Плательщик за перевозку:
+                      <input type="text" id="toPlatelshchik">
+                    </label>
+                  </div>
+                </fieldset>
+                
+                <!-- ЛОГИСТИЧЕСКАЯ ИНФОРМАЦИЯ -->
+                <fieldset style="grid-column: 1 / -1;">
+                  <legend>Логистическая информация</legend>
+                  <div class="form-grid cols-2">
+                    <label>№ Рейса:
+                      <input type="text" id="toNomerReisa">
+                    </label>
+                    <label>Тип транспорта:
+                      <!-- ✅ T18 ПАРАМЕТРЫ (VBA cbTransportTip): комбобокс —
+                           свободный ввод не заблокирован, список = базовые
+                           значения + история сохранённых операций -->
+                      <div class="combo" id="toTransportTipCombo">
+                        <input type="text" id="toTransportTip" autocomplete="off" placeholder="— введите или выберите —">
+                        <div class="combo-list" id="toTransportTipList" hidden></div>
+                      </div>
+                    </label>
+                    <label>Способ загрузки (выгрузки):
+                      <!-- ✅ T18 ПАРАМЕТРЫ (VBA cbZagruzkaSposob): комбобокс -->
+                      <div class="combo" id="toZagruzkaSposobCombo">
+                        <input type="text" id="toZagruzkaSposob" autocomplete="off" placeholder="— введите или выберите —">
+                        <div class="combo-list" id="toZagruzkaSposobList" hidden></div>
+                      </div>
+                    </label>
+                    <label>Темп. режим:
+                      <input type="text" id="toTempRezhim">
+                    </label>
+                    <label style="grid-column: 1/-1">Оформление ТН:
+                      <select id="toTnOformlenie">
+                        <option value="">—</option>
+                        <option value="ТН оформляет Экспедитор/Перевозчик">ТН оформляет Экспедитор/Перевозчик</option>
+                        <option value="ТН оформляет Грузоотправитель">ТН оформляет Грузоотправитель</option>
+                      </select>
+                    </label>
+                  </div>
+                </fieldset>
+                
+                <!-- КОММЕНТАРИЙ -->
+                <fieldset style="grid-column: 1 / -1;">
+                  <legend>Комментарий</legend>
+                  <!-- ✅ T18 ТРЕБОВАНИЯ (VBA cbListKomment + cmdAddTreb /
+                       cmdDelTreb): не простой ввод — выбор из существующих
+                       значений, комбинации собираются кнопками «Добавить» /
+                       «Удалить выбранное» -->
+                  <div class="treb-row">
+                    <div class="combo" id="toListKommentCombo">
+                      <input type="text" id="toListKomment" autocomplete="off" placeholder="— выберите или введите требование —">
+                      <div class="combo-list" id="toListKommentList" hidden></div>
+                    </div>
+                    <button type="button" class="btn btn-sm" id="btnAddTreb">Добавить</button>
+                    <button type="button" class="btn btn-sm" id="btnDelTreb">Удалить выбранное</button>
+                  </div>
+                  <textarea id="toKommentariy" rows="4" style="width: 100%; margin-top: 6px;"></textarea>
+                </fieldset>
+              </div>
+              
+              <div class="param-buttons">
+                <button class="btn btn-sm" id="btnAutoFill"> Автозаполнение параметров перевозки</button>
+                <button class="btn btn-sm" id="btnCalcPallets" title="Тип груза по позициям, укладка, авто-расчёт и группировка тарных мест">📦 Тарные места (расчёт)</button>
+              </div>
+            </section>
+            
+            <!-- ===== ВКЛАДКА 5: ДОКУМЕНТЫ ===== -->
+            <section id="tabDokumenty" class="tab-content">
+              <fieldset>
+                <legend>Документы на перевозку</legend>
+                <!-- ✅ T44: каждый документ — ОДНА строка: номер, дата, ID,
+                     Создать / Ред. / Откр. (полные названия — в подсказках
+                     при наведении на кнопку).
+                     «Откр.» открывает документ на сайте ВАЗ в браузере
+                     ПО УМОЛЧАНИЮ (Яндекс Браузер) — референс nak_M_15,
+                     аналог VBA-перехода (IE Navigate + AuthPopup)
+                     без IE-автоматизации. ✅ T46: при «нет связи» окно
+                     остаётся с реальной страницей сайта, сервер не падает -->
+                <div class="doc-row" title="Служебная записка на транспорт (ЭДО АВТОВАЗа, шаблон 65555751)">
+                  <span class="doc-name">СЗ на транспорт:</span>
+                  <input type="text" id="toSzTransportNomer" placeholder="№" title="№ СЗ на транспорт">
+                  <input type="date" id="toSzTransportData" title="Дата СЗ на транспорт">
+                  <input type="text" id="toSzTransportID" class="doc-id" placeholder="ID" title="ID СЗ в системе (d_kod портала). ✅ T86: если документ создан в ЭДО вручную — введите ID здесь и сохраните операцию («Редактировать»), затем доступны «Ред.»/«Откр.» по этому d_kod">
+                  <button class="btn btn-sm" id="btnCreateDokSB" title="Создать СЗ на транспорт в ЭДО АВТОВАЗа (файл заявки загружается на портал)">Создать</button>
+                  <button class="btn btn-sm" id="btnEditSzText" title="Редактировать текст СЗ на портале (модальное окно)">Ред.</button>
+                  <button class="btn btn-sm" id="btnGoIdoSB" title="Открыть СЗ на сайте ЭДО (docs.vaz.ru) в Яндекс Браузере">🌐 Откр.</button>
+                  <button class="btn btn-sm doc-del" id="btnDelSzTransport" title="Удалить СЗ">✖</button>
+                </div>
+                <div class="doc-row" title="Служебная записка в СБ об отгрузке (ЭДО АВТОВАЗа, шаблон 65133697)">
+                  <span class="doc-name">СЗ в СБ об отгрузке:</span>
+                  <input type="text" id="toSzSBOtgruzka" placeholder="№" title="№ СЗ в СБ об отгрузке">
+                  <input type="date" id="toSzSBOtgruzkaD" title="Дата СЗ в СБ об отгрузке">
+                  <input type="text" id="toSzSbId" class="doc-id" placeholder="ID" title="ID СЗ в СБ об отгрузке (d_kod портала). ✅ T86: если письмо создано в ЭДО вручную — введите ID здесь и сохраните операцию («Редактировать»), затем доступны «Ред.»/«Откр.» по этому d_kod">
+                  <button class="btn btn-sm" id="btnCreateSzSb" title="Создать СЗ в СБ об отгрузке (текст письма из БД — правка в модальном окне, подписант Савченко В.М., вложения — файлы подписанных заказов)">Создать</button>
+                  <button class="btn btn-sm" id="btnEditSzTextSb" title="Редактировать текст письма СЗ в СБ на портале (модальное окно)">Ред.</button>
+                  <button class="btn btn-sm" id="btnGoIdoSb" title="Открыть СЗ в СБ на сайте ЭДО (docs.vaz.ru) в Яндекс Браузере">🌐 Откр.</button>
+                  <button class="btn btn-sm doc-del" id="btnDelSzSb" title="Удалить СЗ">✖</button>
+                </div>
+                <div class="doc-row" title="Накладная М-15 или УПД (система ВАЗ, SIPORA tportal.vaz.ru/sipora/ou38)">
+                  <span class="doc-name">М-15 / УПД:</span>
+                  <input type="text" id="toFormM15UPD" placeholder="№" title="№ формы М-15 или УПД (номера через «, »)">
+                  <input type="date" id="toFormM15UPD_D" title="Дата отгрузки (М-15/УПД)">
+                  <span class="doc-id doc-spacer" title="У накладной М-15 нет ID портала"></span>
+                  <button class="btn btn-sm" id="btnAddNaklM15" title="Создать накладные М-15 в системе ВАЗ (SIPORA)">Создать</button>
+                  <button class="btn btn-sm" id="btnOpenNaklM15" title="Открыть накладную на сайте SIPORA в Яндекс Браузере (поиск по первому номеру)">🌐 Откр.</button>
+                </div>
+                <div class="doc-row" title="Транспортная накладная">
+                  <span class="doc-name">ТН / накладная:</span>
+                  <input type="text" id="toTnNomer" placeholder="№" title="№ ТН / накладной">
+                  <input type="date" id="toTnNomerD" title="Дата ТН / накладной">
+                </div>
+              </fieldset>
+              
+              <div class="document-buttons">
+                <button class="btn btn-sm" id="btnEmailSP"> Отправить письмо</button>
+              </div>
+                <!-- ✅ T37: файл заявки (создаётся кнопкой «Создать СЗ в системе»; аналог
+                     файла в папке «отгрузка» из VBA SaveShipmentFile) -->
+                <div id="szFileRow" style="display:none; margin-top: 8px; font-size: 13px;">
+                  📎 Файл заявки: <a id="szFileLink" href="#" download></a>
+                </div>
+            </section>
+            
+            <!-- ===== ВКЛАДКА 6: ДАННЫЕ О ВОДИТЕЛЕ ===== -->
+            <section id="tabVoditel" class="tab-content">
+              
+              <!-- ✅ Вложенная панель для вертикальной раскладки (Верх ↔ Низ) -->
+              <div class="panel gorizont" style="flex: 1; min-height: 0;">
+                
+                <!-- БЛОК 1: Форма данных (конечный блок form-panel) -->
+                <div class="form-panel" style="width: 100%; max-width: none; margin: 0; border: none; border-radius: 0; overflow-y: auto;">
+                  <h4 style="margin-bottom: 8px; color: var(--primary); border-bottom: 1px solid var(--border); padding-bottom: 4px;">Данные о перевозчике</h4>
+                  
+                  <fieldset>
+                    <legend>Транспортное средство</legend>
+                    <div class="form-grid">
+                      <label style="grid-column: 1/-1">Гос. № ТС:
+                        <select id="toGosN">
+                          <option value="">— Выберите —</option>
+                        </select>
+                      </label>
+                      <label>Марка ТС:
+                        <input type="text" id="toMarkaTC" readonly placeholder="нет данных">
+                      </label>
+                    </div>
+                  </fieldset>
+                  
+                  <fieldset>
+                    <legend>Водитель</legend>
+                    <div class="form-grid">
+                      <label style="grid-column: 1/-1">ФИО водителя:
+                        <select id="toFIOVodit">
+                          <option value="">— Выберите —</option>
+                        </select>
+                      </label>
+                      <label>№ вод. уд.:
+                        <input type="text" id="toVoditUD" readonly placeholder="нет данных">
+                      </label>
+                      <label>Конт. тел:
+                        <input type="text" id="toKontakt" readonly placeholder="нет данных">
+                      </label>
+                      <label>Фирма:
+                        <input type="text" id="toPerevozchikFirma" readonly placeholder="нет данных">
+                      </label>
+                    </div>
+                  </fieldset>
+                  
+
+                </div>
+                
+                <!-- ✅ РЕСАЙЗЕР: Горизонтальный (строго между двумя блоками внутри panel.gorizont) -->
+                <div class="resizer horizontal"></div>
+                
+                <!-- БЛОК 2: Таблица перевозчиков (конечный блок table-panel) -->
+                <div class="table-panel">
+                                   
+                  <div class="toolbar">
+                    <h3 class="table-title">Список всех доступных перевозчиков</h3>
+                     <button class="btn btn-sm" id="btnEditPerevozchik" style="margin-top: 8px;">✏️ Изменить данные по перевозчикам</button>
+                  </div>
+                  <div id="perevozchikTable" class="vtable-container"></div>
+                                    <!-- Фильтры (внизу) -->
+                  <div class="filter-section" style="flex-shrink: 0; margin-top: 4px; padding: 8px 10px;" title="Быстрый поиск по всему списку доступных перевозчиков">
+                    <div class="filter-row" style="margin-bottom: 0;">
+                      <label class="filter-label" >Быстрый поиск:</label>
+                      <input type="text" id="fltFIOVoditel" class="filter-input" placeholder="ФИО водителя:" style="max-width: 150px;">
+                      <input type="text" id="fltGosNomTC" class="filter-input" placeholder="Гос. № ТС:" style="max-width: 200px;">
+                      <input type="text" id="fltFirma" class="filter-input" placeholder="Фирма:" style="max-width: 150px;">
+                      <button class="btn btn-sm btn-danger" id="btnClearFilters" title="Сбросить фильтры" style="padding: 4px 10px;">✖</button>
+                    </div>
+                  </div>
+     
+                </div>
+                
+              </div>
+              
+            </section>
+            
+          </div>
+          
+          <!-- Кнопки CRUD -->
+          <div class="transport-crud-btns">
+           
+            <button class="btn btn-success" id="btnAdd">➕ Добавить</button>
+            <button class="btn btn-primary" id="btnEdit">✏️ Редактировать</button>
+            <button class="btn btn-danger" id="btnDelete">🗑 Удалить</button>
+          </div>
+          
+        </div>
+      </div>
+      
+    
+      
+    </div>
+  </div>
+  <!-- ✅ T57: МОДАЛЬНОЕ ОКНО «Расчёт тарных мест» (полностью заменяет
+       «Параметры заготовки» и окно детализации T56-b). Секция 1 — грузовые
+       позиции с ТИПОМ ГРУЗА (в листах / в прутках / отдельные заготовки) и
+       параметрами типа (лист Д×Ш×Т+марка; пруток Д+Ø+марка; тара Д×Ш×В +
+       УКЛАДКА: один слой / пирамидкой / стоймя — ручной параметр).
+       Секция 2 — группировка: пачки листов (штабелируются, макс. габарит),
+       связки прутков (штабелируются), деревянная тара (НЕ штабелируется,
+       каждый типоразмер — отдельная строка СЗ). Кнопки: Авто-расчёт
+       (с проверкой параметров и подсветкой незаполненного), ручной ввод
+       тарного места, Применить и закрыть. -->
+  <!-- ✅ T57-d: МОДАЛЬНОЕ ОКНО «Расчёт тарных мест» — большое окно:
+       слева ВИРТУАЛЬНАЯ ТАБЛИЦА позиций (№ позиции; Наименование;
+       Габарит Д×Ш×В, м; Колич. загот., шт; Марка; Кол. годн+брак),
+       справа форма редактирования позиции (тип груза + параметры типа +
+       марка + ручное кол-во заготовок); нижняя часть — «Группировка тарных
+       мест»: виртуальная таблица (Тип места; Габарит; Штабел.; Кол-во;
+       Вес; Укладка; Позиции) + форма редактирования + кнопки
+       Добавить/Удалить; высота нижней части — горизонтальным ресайзом. -->
+  <style>
+    #tarnModal .poz-params-window {
+      width: 94vw; max-width: 1560px; height: 92vh;
+      display: flex; flex-direction: column; resize: none;
+    }
+    #tarnModal .poz-params-body { flex: 1 1 0; min-height: 0; padding-right: 4px; overflow: hidden; }
+    /* ✅ T57-e: раскладка модалки — ШТАТНЫЕ панели проекта (как на странице
+       «Внесение коммерческих предложений»): .panel.vertikal = зона таблицы
+       слева + вертикальный ресайз + зона формы справа; .panel.gorizont =
+       верхняя часть, горизонтальный ресайз, нижняя «Группировка тарных мест». */
+    #tarnModal .panel.tarn-top { flex: 1.15 1 0; min-height: 150px; }
+    #tarnModal .tarn-legend { font-weight: 600; font-size: 12.5px; color: #345; padding: 0 4px; flex: 0 0 auto; }
+    #tarnModal .table-panel.tarn-zona-t { flex: 1 1 0; }
+    #tarnModal .tarn-vt { flex: 1 1 0; min-height: 90px; }
+    #tarnModal .tarn-btns { display: flex; gap: 6px; margin-bottom: 5px; flex: 0 0 auto; }
+    #tarnModal .form-panel.tarn-form { flex: 0 0 340px; padding: 8px 10px; font-size: 12.5px; }
+    #tarnModal .tarn-bottom { flex: 0 0 auto; height: 300px; }
+    #tarnModal .panel.tarn-bottom-cols { flex: 1 1 0; min-height: 0; }
+    #tarnModal .tarn-bottom-cols .tarn-zona-g { flex: 1 1 0; }
+    .tarn-form h4 { margin: 0 0 7px; font-size: 13px; color: #234; }
+    .tarn-form label { display: flex; flex-direction: column; margin-bottom: 6px; font-size: 11.5px; color: #556; }
+    .tarn-form input, .tarn-form select { font-size: 12.5px; padding: 3px 6px; min-width: 0; }
+    .tarn-form .tf-row { display: flex; gap: 8px; }
+    .tarn-form .tf-row label { flex: 1; }
+    .tf-invalid { border-color: #d32f2f !important; background: #fdecea !important; }
+    .tarn-pozlist { border: 1px solid #d5dce3; border-radius: 4px; background: #fff; max-height: 148px; overflow-y: auto; padding: 5px 7px; }
+    .tarn-pozlist label { display: flex; flex-direction: row; align-items: center; gap: 6px; margin: 2px 0; font-size: 12px; color: #334; }
+    .tarn-note { font-size: 11px; color: #8a94a0; margin: 4px 0 0; flex: 0 0 auto; }
+    .tarn-warn { color: #a15c00; font-size: 12px; white-space: pre-wrap; min-height: 15px; margin: 5px 2px; flex: 0 0 auto; max-height: 54px; overflow-y: auto; }
+    .tarn-kpi { font-size: 13px; color: #234; }
+    .tarn-vt .vtable-row { cursor: default; }
+    #tarnModal .poz-params-actions { flex: 0 0 auto; }
+  </style>
+  <div id="tarnModal" class="poz-params-overlay hidden">
+    <div class="poz-params-window">
+      <h3>Расчёт тарных мест</h3>
+      <p class="poz-params-info" id="tarnInfo">—</p>
+      <div class="poz-params-body panel gorizont">
+        <div class="panel vertikal tarn-top">
+          <div class="table-panel tarn-zona-t">
+            <span class="tarn-legend">1. Грузовые позиции — тип груза и параметры (редактируется в форме справа)</span>
+            <div id="tarnPozTable" class="vtable-container tarn-vt"></div>
+            <p class="tarn-note">Типы груза: <b>в листах</b> (лист Д×Ш×Т + марка), <b>в прутках</b> (длина + Ø сечения связки), <b>отдельные заготовки</b> (габарит тары Д×Ш×В + укладка). Укладка в деревянной таре — ручной параметр: «один слой» / «пирамидкой» / «стоймя». Листы разных типоразмеров штабелируются в одну пачку (макс. Д×Ш); деревянная тара не штабелируется — каждый типоразмер тары едет отдельным тарным местом и строкой в СЗ.</p>
+          </div>
+          <div class="resizer" title="Потяните, чтобы изменить ширину зоны формы"></div>
+          <div class="form-panel tarn-form" id="tarnPozForm"></div>
+        </div>
+        <div class="resizer horizontal" id="tarnResizer" title="Потяните, чтобы изменить высоту нижней части"></div>
+        <div class="table-panel tarn-bottom" id="tarnBottomBox">
+          <span class="tarn-legend">2. Группировка тарных мест (строка — на каждый тип тарного места перевозки; при изменении состава позиций вес и макс. габариты места пересчитываются)</span>
+          <div class="panel vertikal tarn-bottom-cols">
+            <div class="table-panel tarn-zona-g">
+              <div class="tarn-btns">
+                <button class="btn btn-sm" id="tarnAddManual" title="Добавить тарное место вручную">+ Добавить место</button>
+                <button class="btn btn-sm" id="tarnDelGroup" title="Удалить выбранное тарное место">✖ Удалить</button>
+              </div>
+              <div id="tarnGroupsTable" class="vtable-container tarn-vt"></div>
+            </div>
+            <div class="resizer" title="Потяните, чтобы изменить ширину зоны формы"></div>
+            <div class="form-panel tarn-form" id="tarnGroupForm"></div>
+          </div>
+        </div>
+        <p class="tarn-warn" id="tarnWarn"></p>
+      </div>
+      <div class="poz-params-actions" style="display:flex; gap:8px; align-items:center;">
+        <span id="tarnKpi" class="tarn-kpi">Итого: —</span>
+        <span style="flex:1"></span>
+        <button class="btn btn-sm btn-primary" id="tarnAutoCalc" title="Проверка параметров и расчёт по типам груза (незаполненное подсвечивается)">⚙ Авто-расчёт</button>
+        <button class="btn btn-sm" id="tarnCancel">Отмена</button>
+        <button class="btn btn-sm btn-success" id="tarnApply" title="Сохранить тарные места и кол-во заготовок по позициям">✓ Применить и закрыть</button>
+      </div>
+    </div>
+  </div>
+  </div>
+  <div id="szLetterModal" class="poz-params-overlay hidden">
+    <div class="poz-params-window" style="width: 760px;">
+      <h3>Редактирование текста СЗ</h3>
+      <p class="poz-params-info" id="szLetterInfo">—</p>
+      <!-- ✅ T39-C: WYSIWYG-редактор (простой, как RTF): HTML рендерится, правится только текст -->
+      <div id="szLetterToolbar" style="display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px;">
+        <button type="button" class="szl-btn" data-cmd="bold" title="Полужирный (Ctrl+B)"><b>B</b></button>
+        <button type="button" class="szl-btn" data-cmd="italic" title="Курсив (Ctrl+I)"><i>I</i></button>
+        <button type="button" class="szl-btn" data-cmd="underline" title="Подчёркнутый (Ctrl+U)"><u>U</u></button>
+        <button type="button" class="szl-btn" data-cmd="strikeThrough" title="Зачёркнутый"><s>S</s></button>
+        <button type="button" class="szl-btn" data-cmd="undo" title="Отменить">↶</button>
+        <button type="button" class="szl-btn" data-cmd="redo" title="Повторить">↷</button>
+        <button type="button" class="szl-btn" data-cmd="removeFormat" title="Убрать форматирование в выделении">убрать формат</button>
+        <button type="button" class="szl-btn" id="szLetterSourceBtn" title="Режим HTML-тегов (как было до T39-C)">HTML</button>
+      </div>
+      <div id="szLetterEditor" contenteditable="true" style="width: 100%; box-sizing: border-box; height: 360px; overflow-y: auto; resize: vertical; border: 1px solid #c8d0d8; border-radius: 6px; padding: 10px 12px; background: #fff; font-size: 14px; line-height: 1.35; outline: none;"></div>
+      <textarea id="szLetterText" hidden style="width: 100%; box-sizing: border-box; height: 360px; resize: vertical; font-family: Consolas, 'Courier New', monospace; font-size: 12.5px; white-space: pre-wrap; border: 1px solid #c8d0d8; border-radius: 6px; padding: 8px;"></textarea>
+      <p class="poz-params-hint">Тело письма редактируется визуально, как в Word/RTF: теги &lt;div&gt;/&lt;br /&gt; рендерятся сами — правится только текст. Кнопка «HTML» показывает исходную разметку (теги видны, как раньше). ✅ T39-B: сохранение — SaveShablon.aspx (multipart, windows-1251) со ВСЕМИ полями страницы — подписант, исполнитель, адресаты и телефон не затираются.</p>
+      <div class="poz-params-actions">
+        <!-- ✅ T43: видна только в режиме предпросмотра нового письма СЗ в СБ -->
+        <button class="btn btn-sm btn-success" id="szLetterCreateSb" style="display: none;">📤 Создать СЗ в СБ</button>
+        <button class="btn btn-sm btn-success" id="szLetterSave">💾 Сохранить на портал</button>
+        <button class="btn btn-sm" id="szLetterCancel">Отмена</button>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="../js/app-transport-ops.js"></script>
+</body>
+</html>

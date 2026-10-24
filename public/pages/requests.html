@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Запросы на коммерческие предложения</title>
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="../resizer.css">
+    <style>
+        /* ===== Пошаговое согласование (аналог нумерованных блоков VBA) ===== */
+        .approval-step {
+            display: flex; gap: 8px; align-items: flex-start;
+            padding: 7px 2px; border-top: 1px dashed var(--border);
+        }
+        .approval-step:first-of-type { border-top: none; padding-top: 2px; }
+        .step-num {
+            flex-shrink: 0; width: 20px; height: 20px; margin-top: 2px;
+            display: inline-flex; align-items: center; justify-content: center;
+            background: #ffe0c2; border: 1px solid #e08a3c; color: #a04a00;
+            font-size: 12px; font-weight: 700; border-radius: 3px;
+        }
+        .approval-step.done .step-num { background: #c8e6c9; border-color: var(--success); color: var(--success); }
+        .step-body { flex: 1; min-width: 0; }
+        .step-title { font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 4px; }
+
+        /* ===== Особый режим: без фактической отправки писем ===== */
+        .dry-run-label {
+            display: inline-flex; align-items: center; gap: 6px;
+            margin-top: 6px; padding: 3px 8px;
+            font-size: 11px; font-weight: 600; color: var(--muted);
+            border: 1px dashed var(--border); border-radius: 4px;
+            cursor: pointer; user-select: none; width: fit-content;
+        }
+        .dry-run-label input { accent-color: #e08a3c; margin: 0; }
+        .dry-run-label.active {
+            color: #a04a00; background: #ffe0c2; border-color: #e08a3c;
+        }
+
+        /* ===== Парные блоки «Оснастка для запроса КП» / «Фирмы для запроса КП» =====
+           Единая геометрия обоих fieldset:
+           1) fieldset не выходит за пределы родителя (form-panel);
+           2) левая и правая таблицы внутри fieldset равны друг другу;
+           3) изменение ширины колонок таблиц не меняет ширину родителя
+              (vtable скроллится внутри, .kp-col имеет min-width: 0);
+           4) колонка кнопок фиксированной ширины (.kp-btn-col) — ОДИНАКОВА
+              в обоих fieldset, поэтому левые/правые таблицы обоих блоков
+              расположены строго друг под другом. */
+        fieldset.kp-fieldset {
+            width: 100%;
+            max-width: 100%;
+            min-width: 0;
+            box-sizing: border-box;
+        }
+        .kp-dual-row {
+            display: flex;
+            gap: 2px;
+            align-items: stretch;
+            min-width: 0;
+        }
+        /* Колонки таблиц: строго равные доли строки, контент их не распирает */
+        .kp-dual-row > .kp-col {
+            flex: 1 1 0;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        /* Колонка кнопок: фиксированная ширина, одинаковая в обоих fieldset */
+        .kp-dual-row > .kp-btn-col {
+            flex: 0 0 64px;
+            width: 64px;
+            min-width: 64px;
+            max-width: 64px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            justify-content: center;
+        }
+        .kp-btn-col .btn {
+            width: 100%;
+            min-width: 0;
+            box-sizing: border-box;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+        /* Таблицы: ширина строго по колонке, лишнее — внутренний скролл.
+           flex: 0 0 auto ОБЯЗАТЕЛЕН: у .vtable-container инжектирован flex:1 —
+           без этого он растягивается по высоте и ломает height:180px */
+        .kp-col .vtable-container {
+            flex: 0 0 auto;
+            width: 100%;
+            min-width: 0;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* Блок «Согласование»: Chrome задаёт fieldset min-width: min-content —
+           из-за этого при показе блок выпирал за панель (596px вместо 516px).
+           min-width: 0 + minmax(0,1fr) позволяют грид-колонкам сжиматься. */
+        #approvalFieldset { min-width: 0; max-width: 100%; }
+        #approvalFieldset .form-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+        #approvalFieldset .form-grid > label { min-width: 0; }
+    </style>
+</head>
+<body>
+<div class="app">
+    <header class="app-header">
+        <h1>📋 Запросы на коммерческие предложения</h1>
+
+        <div id="toast" class="toast hidden"></div>
+        <div id="wsStatus" class="ws-status disconnected">⚫ Offline</div>
+    </header>
+    <main class="content" style="padding: 8px;">
+        <div class="panel requests-panel">
+            <!-- ЛЕВАЯ ПАНЕЛЬ: Список запросов -->
+            <div class="table-panel">
+                <!-- Блок фильтров (как в VBA "Установка фильтров") -->
+                <div class="filter-section">
+             <div style="display: flex; gap: 10px; flex-wrap: wrap; width: 100%;">
+
+    <!-- Колонка 1: год, фирма, договор -->
+    <div class="filter-col" style="flex: 0 1 220px; min-width: 180px; max-width: 280px;">
+        <div class="filter-group">
+            <label for="fltGod" style="white-space: nowrap;">Год от:</label>
+            <input type="number" id="fltGod" min="1926" max="2026" value="2026" step="1" class="contract-year-input"/>
+            <label for="fltGodDo" style="white-space: nowrap;">до:</label>
+            <input type="number" id="fltGodDo" min="1926" max="2026" value="2026" step="1" class="contract-year-input"/>
+            <button class="filter-clear" id="btnClearGod">×</button>
+        </div>
+        <div class="filter-group">
+            <label>Фирма:</label>
+            <select id="fltFirma">
+                <option value="">Выбор Контрагента</option>
+            </select>
+            <button class="filter-clear" id="btnClearFirma">×</button>
+        </div>
+        <label class="filter-chk">
+            <input type="checkbox" id="fltHasDog"> наличие действующих договоров
+        </label>
+    </div>
+
+    <!-- Колонка 2: чертёж, наименование, авто/моб/дет (растягивается) -->
+    <div class="filter-col">
+        <div class="filter-group">
+            <label>№ чертежа оснастки:</label>
+            <input type="text" id="fltNomerChert" placeholder="Поиск...">
+            <button class="filter-clear" id="btnClearNomerChert">×</button>
+        </div>
+        <div class="filter-group">
+            <label>Наименование:</label>
+            <input type="text" id="fltNaimenovanie" placeholder="Поиск...">
+            <button class="filter-clear" id="btnClearNaimenovanie">×</button>
+        </div>
+        <div class="filter-group">
+            <label>Авто/Моб/Дет:</label>
+            <input type="text" id="fltAvtoDet" placeholder="Поиск...">
+            <button class="filter-clear" id="btnClearAvtoDet">×</button>
+        </div>
+    </div>
+
+    <!-- Колонка 3: чекбоксы техопераций (такое же ограничение, как у первой) -->
+    <div style="flex: 0 1 120px; min-width: 120px; max-width: 1250px;">
+        <div class="filter-checkboxes" style="border-top: none; padding-top: 0; margin-top: 0;">
+            <label class="filter-chk"><input type="checkbox" id="fltTO"> ТО (закалка)</label>
+            <label class="filter-chk"><input type="checkbox" id="fltPPD"> ППД</label>
+            <label class="filter-chk"><input type="checkbox" id="fltTisn"> Тиснение</label>
+            <label class="filter-chk"><input type="checkbox" id="fltPokr"> Покрытие</label>
+            <label class="filter-chk"><input type="checkbox" id="fltTONA"> TONA (азот/цемент)</label>
+        </div>
+    </div>
+
+</div>
+                    <!-- ✅ Фильтры по детали (№ чертежа, Наименование, Авто/Моб/Дет,
+                         чекбоксы техопераций) действуют одновременно на список
+                         запросов И на таблицу «Доступные детали» — переключатель
+                         области не требуется, как на «Формировании плана производства». -->
+                    <div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border); display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                        <button class="btn btn-sm" id="btnClearAllFilters" style="margin-left: auto;">Сбросить все фильтры</button>
+                    </div>
+                </div>
+
+                <!-- Toolbar -->
+                <div class="toolbar">
+                    <h3 class="table-title">Запросы КП <span class="hint">клик по заголовку — новый запрос</span></h3>
+                    <div class="toolbar-btns">
+                        <button class="btn btn-primary" id="btnZaprosAdd" title="Добавить" disabled>➕</button>
+                        <button class="btn btn-success" id="btnZaprosSave" title="Сохранить" disabled>💾</button>
+                        <button class="btn btn-danger" id="btnZaprosDel" title="Удалить" disabled>✖</button>
+                    </div>
+                </div>
+
+                <!-- Таблица запросов -->
+                <div id="zaprosTable" class="vtable-container"></div>
+            </div>
+
+            <!-- Вертикальный ресайз -->
+            <div class="resizer"></div>
+
+            <!-- ПРАВАЯ ПАНЕЛЬ: Форма запроса -->
+            <div class="form-panel form-wide">
+
+                <h4 id="zaprosFormTitle">Данные запроса КП</h4>
+                <fieldset>
+                    <legend>Статус:</legend>
+                    <div class="form-inline-compact">
+                        <input id="zStatus" type="text" readonly value="создание" style="color: var(--muted); font-weight: 600;width:100%;">
+                    </div>
+                    <!-- Особый режим: письма реально не отправляются, но даты и статусы проставляются -->
+                    <label class="dry-run-label" for="chkNoSend"
+                           title="Особый режим: письма реально НЕ отправляются, но система проставляет даты отправки и меняет статус, как при обычной отправке. Использовать иногда, в особых случаях.">
+                        <input type="checkbox" id="chkNoSend">
+                        <span>Без отправки писем (особый случай)</span>
+                    </label>
+                </fieldset>
+                <!-- Основные поля -->
+                <fieldset>
+                    <legend>Параметры запроса</legend>
+                    <div class="form-inline-compact">
+                        <label>№ запроса *
+                            <input id="zNomer" type="text" maxlength="4" class="w-num">
+                        </label>
+                        <label>от
+                            <input id="zData" type="date" class="w-date">
+                        </label>
+                        <label>Срок (раб. дней)
+                            <input id="zSrok" type="text" maxlength="2" class="w-days">
+                        </label>
+                    </div>
+
+                    <label style="display: block; margin-top: 6px;">Комментарий:
+                        <textarea id="zKoment" rows="2" style="width: 100%; padding: 4px 6px; border: 1px solid var(--border); border-radius: 4px; font-size: 12px; resize: vertical;"></textarea>
+                    </label>
+                </fieldset>
+
+
+
+                <!-- Детали и фирмы -->
+                <fieldset class="kp-fieldset">
+                <legend>Оснастка для запроса КП</legend>
+                <div class="kp-dual-row">
+                    <!-- Контейнер выбранных деталей -->
+                    <div class="kp-col detali-selected-container">
+                        <!-- ✅ T54-c: «🧹» вынесена из колонки кнопок — колонка скрывается уже
+                             со статусом «отправлено …», а чистить дубли нужно ДО выбора лучших КП.
+                             Активность кнопки управляет Requests._updateClearDoublesBtn():
+                             гаснет только на «выбраны лучшие КП» / «создан заказ по лучшим КП» -->
+                        <label style="display: flex; align-items: center; justify-content: space-between; gap: 4px;">Выбранные детали:
+                            <button class="btn btn-sm" id="btnClearDoubles" title="Очистить от дублей (убирает повторяющиеся № чертежа; позиции с назначенным лучшим КП не удаляются)" style="font-size: 10px; padding: 1px 6px;">🧹</button>
+                        </label>
+                        <div id="lstDetaliKP" class="vtable-container" style="height: 180px; border: 1px solid var(--border);"></div>
+                    </div>
+                    <!-- Контейнер кнопок деталей (фикс. ширина .kp-btn-col — как у колонок фирм) -->
+                    <div class="kp-btn-col detali-buttons-container">
+                        <button class="btn btn-sm" id="btnAddDetali" title="Добавить →">←</button>
+                        <button class="btn btn-sm" id="btnDelDetali" title="← Удалить">→</button>
+                        <button class="btn btn-sm" id="btnClearDetali" title="Очистить выбор" style="font-size: 10px;">✖</button>
+                    </div>
+                    <!-- Контейнер доступных деталей -->
+                    <div class="kp-col detali-available-container">
+                        <label>Доступные детали:</label>
+                        <div id="lstDetali" class="vtable-container" style="height: 180px; border: 1px solid var(--border);"></div>
+                    </div>
+                </div>
+
+                </fieldset>
+                <fieldset class="kp-fieldset">
+                <legend>Фирмы для запроса КП</legend>
+
+                <div class="kp-dual-row">
+                     <!-- Контейнер выбранных фирм -->
+                    <div class="kp-col firm-selected-container">
+                        <label>Выбранные фирмы:</label>
+                        <div id="lstFirmKP" class="vtable-container" style="height: 180px; border: 1px solid var(--border);"></div>
+                    </div>
+                    <!-- ✅ ЕДИНАЯ вертикальная колонка кнопок фирм (фикс. ширина .kp-btn-col — как у колонок деталей) -->
+                    <div class="kp-btn-col">
+                        <!-- → и ← (СКРЫВАЮТСЯ при блокировке состава) -->
+                        <div class="firm-buttons-container" style="display: flex; flex-direction: column; gap: 2px;">
+                            <button class="btn btn-sm" id="btnAddFirm" title="Добавить →">←</button>
+                            <button class="btn btn-sm" id="btnDelFirm" title="← Удалить">→</button>
+                        </div>
+                          <!-- ✅ Выделение: видно ТОЛЬКО когда видна хотя бы одна этапная кнопка -->
+                        <div class="firm-selection-container composition-locked" style="display: flex; flex-direction: column; gap: 2px;">
+                            <button class="btn btn-sm" id="btnSelectAllFirms" title="Выделить все фирмы для отправки" style="font-size: 10px;">☑ Все</button>
+                            <button class="btn btn-sm" id="btnClearFirm" title="Очистить выделение в обеих таблицах" style="font-size: 10px;">✖</button>
+                        </div>
+                        <!-- ЭТАПНЫЕ кнопки (скрыты по статусу) -->
+                        <button class="btn btn-sm btn-success" id="btnEmailFirma" title="Отправить запрос выделенным контрагентам" style="display: none; font-size: 10px;">📧 Отпр.</button>
+                        <!-- ✅ T88: просмотр сохранённого файла запроса «Заявка № …xlsx» (public/Заявки/<год>) -->
+                        <button class="btn btn-sm" id="btnPreviewZayavka" title="Просмотреть сохранённый файл запроса «Заявка № …».xlsx (public/Заявки/<год>) — тот же просмотрщик, что при отправке" style="display: none; font-size: 10px;">👁 Файл</button>
+                        <button class="btn btn-sm" id="btnUpdateURL" title="Обновить URL и уведомить отправленных" style="display: none; font-size: 10px;">🔄 URL</button>
+                    </div>
+                    <!-- Контейнер доступных фирм -->
+                    <div class="kp-col firm-available-container">
+                        <label>Доступные фирмы:</label>
+                        <div id="lstFirm" class="vtable-container" style="height: 180px; border: 1px solid var(--border);"></div>
+                    </div>
+                </div>
+                </fieldset>
+                <!-- URL и статус -->
+                <fieldset id="approvalFieldset" style="display: none;">
+                    <legend>Согласование запроса и документации технологом</legend>
+
+                    <!-- ШАГ 1: отправка технологу -->
+                    <div class="approval-step" id="stepTeh">
+                        <span class="step-num">1</span>
+                        <div class="step-body">
+                            <div class="step-title">Согласование запроса технологом</div>
+                            <div class="form-grid cols-2">
+                                <label>Технолог:
+                                    <select id="zTech"><option value="">— Выберите технолога —</option></select>
+                                </label>
+                                <label>Отправлено технологу:
+                                    <div class="date-or-text">
+                                        <input id="zDataTeh" type="date" readonly class="hidden">
+                                        <span id="zDataTehText" class="empty-text">не отправлялось</span>
+                                    </div>
+                                </label>
+                            </div>
+                            <button class="btn btn-primary" id="btnEmailTeh" disabled style="width: 100%; margin-top: 6px;">
+                                📧 Отправить технологу
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- ШАГ 2: ссылка от технолога -->
+                    <div class="approval-step" id="stepUrl" style="display: none;">
+                        <span class="step-num">2</span>
+                        <div class="step-body">
+                            <div class="step-title">Ссылка от технолога на черт. и 3D мод.</div>
+                            <div class="form-grid cols-2">
+                                <label>Ссылка:
+                                    <input id="zUrl" type="text" placeholder="https://disk.360.yandex.ru/..."
+                                        style="width: 100%; padding: 4px 6px; border: 1px solid var(--border); border-radius: 4px; font-size: 12px;">
+                                </label>
+                                <label>Дата ответа:
+                                    <div class="date-or-text">
+                                        <input id="zDataOtvTeh" type="date" readonly class="hidden">
+                                        <span id="zDataOtvTehText" class="empty-text"></span>
+                                    </div>
+                                </label>
+                            </div>
+                            <!-- ✅ T89: проверка доступности файлов по ссылке
+                                 (кнопка видна, только когда ссылка заполнена).
+                                 ✅ T90: кнопка-треугольник (та же, что у блоков
+                                 фильтров, class filter-toggle-btn) справа в строке —
+                                 сворачивает/разворачивает отчёт urlCheckResult -->
+                            <div style="margin-top: 8px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                <!-- ✅ T97: zip-архив, не скачивающийся целиком (file IO failure), открывается как папка — проверяется каждый файл внутри -->
+                                <button class="btn btn-sm" id="btnCheckUrl" title="Пройти по ссылке и проверить, что все файлы доступны для скачивания (сами файлы не сохраняются — только отчёт). Zip-архив, который не скачивается целиком (ошибка file IO failure), открывается как папка — проверяется каждый файл внутри" style="display: none; font-size: 10px;">🔗 Проверить загрузку</button>
+                                <span id="urlCheckStatus" style="font-size: 11px; color: var(--muted);"></span>
+                                <button type="button" class="filter-toggle-btn" id="btnUrlCheckToggle" title="Свернуть отчёт проверки" style="display: none; margin-left: auto;">▲</button>
+                            </div>
+                            <div id="urlCheckResult" style="display: none; margin-top: 6px; border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; max-height: 230px; overflow: auto; font-size: 11px; line-height: 1.45;"></div>
+                        </div>
+                    </div>
+
+                    <!-- ШАГ 3: отправка контрагентам (кнопка 📧 — в колонке фирм) -->
+                    <div class="approval-step" id="stepFirms" style="display: none;">
+                        <span class="step-num">3</span>
+                        <div class="step-body">
+                            <div class="step-title">Отправка контрагентам</div>
+                            <div id="stepFirmsHint" style="font-size: 11px; color: var(--muted); font-style: italic;">
+                                Выделите фирмы в «Выбранные фирмы» и нажмите 📧 Отпр.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ШАГ 4: обновление URL (кнопка 🔄 — в колонке фирм) -->
+                    <div class="approval-step" id="stepUrlUpdate" style="display: none;">
+                        <span class="step-num">4</span>
+                        <div class="step-body">
+                            <div class="step-title">Обновление ссылки на документацию</div>
+                            <label>Дата обновления URL:
+                                <div class="date-or-text">
+                                    <input id="zDataUrl" type="date" readonly class="hidden">
+                                    <span id="zDataUrlText" class="empty-text"></span>
+                                </div>
+                            </label>
+                            <div style="font-size: 11px; color: var(--muted); font-style: italic;">
+                                Замените ссылку в поле шага 2, выделите фирмы и нажмите 🔄 URL
+                            </div>
+                        </div>
+                    </div>
+                </fieldset>
+
+            </div>
+        </div>
+    </main>
+</div>
+<script type="module" src="../js/app-requests.js"></script>
+</body>
+</html>

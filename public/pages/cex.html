@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Справочник цехов затрат</title>
+  <link rel="stylesheet" href="../style.css">
+   <link rel="stylesheet" href="../resizer.css">
+</head>
+<body>
+<div class="app">
+  <header class="app-header">
+    <h1>🏭 Справочник цехов затрат</h1>
+    <div id="toast" class="toast hidden"></div>
+    <div id="wsStatus" class="ws-status disconnected">⚫ Offline</div>
+  </header>
+
+  <main class="content" style="padding: 8px;">
+    <div class="panel cex-panel">
+      <!-- ===== ЛЕВАЯ ПАНЕЛЬ: Фильтры + Таблица ===== -->
+      <div class="table-panel">
+        <!-- Блок фильтров -->
+        <div class="filter-section">
+          <div class="filter-row">
+            <label class="filter-label">Цех:</label>
+            <input type="text" id="fltCeh" class="filter-input" placeholder="Поиск...">
+            <button class="filter-clear" id="btnClearCeh">×</button>
+          </div>
+          <div class="filter-row">
+            <label class="filter-label">Передел:</label>
+            <input type="text" id="fltPeredel" class="filter-input" placeholder="Поиск...">
+            <button class="filter-clear" id="btnClearPeredel">×</button>
+          </div>
+          <div class="filter-row">
+            <label class="filter-label">Название цеха:</label>
+            <input type="text" id="fltNazvanie" class="filter-input" placeholder="Поиск...">
+            <button class="filter-clear" id="btnClearNazvanie">×</button>
+          </div>
+          <div class="filter-row">
+            <label class="filter-label">Начальник:</label>
+            <input type="text" id="fltNach" class="filter-input" placeholder="Поиск...">
+            <button class="filter-clear" id="btnClearNach">×</button>
+          </div>
+          <button class="btn btn-sm" id="btnClearAllFilters">Сбросить все фильтры</button>
+        </div>
+
+        <!-- Toolbar таблицы -->
+        <div class="toolbar">
+          <h3 class="table-title">Цеха затрат <span class="hint">клик по заголовку — новая запись</span></h3>
+          <div class="toolbar-btns">
+            <button class="btn btn-primary" id="btnCexAdd" data-crud="add" title="Добавить" disabled>➕</button>
+            <button class="btn btn-success" id="btnCexSave" data-crud="save" title="Сохранить" disabled>💾</button>
+            <button class="btn btn-danger"  id="btnCexDel" data-crud="del" title="Удалить" disabled>✖</button>
+            <button class="btn" id="btnCexPaste" data-crud="paste" title="Вставить из буфера">📋</button>
+          </div>
+        </div>
+
+        <!-- Виртуальная таблица -->
+        <div id="cexTable" class="vtable-container"></div>
+      </div>
+
+      <!-- Вертикальный ресайз -->
+      <div class="resizer"></div>
+
+      <!-- ===== ПРАВАЯ ПАНЕЛЬ: Форма ===== -->
+      <div class="form-panel form-wide">
+        <h4 id="cexFormTitle">Данные цеха</h4>
+
+        <fieldset>
+          <legend>Основная информация</legend>
+          <div class="form-grid cols-2">
+            <label>Код цеха *
+              <input id="cCeh" type="text" placeholder="1F110">
+            </label>
+            <label>Передел *
+              <input id="cPeredel" type="text" placeholder="1F01Z">
+            </label>
+            <label style="grid-column: 1/-1">Название цеха *
+              <input id="cNazvanie" type="text" placeholder="ЦЕХ МЕХАНИЧЕСКОЙ ОБРАБОТКИ">
+            </label>
+          </div>
+        </fieldset>
+ <button class="btn" id="btnCex7" title="Вставить из буфера">📋</button>
+        <fieldset>
+          <legend>Контактная информация</legend>
+          <div class="form-grid cols-2">
+            <label>Начальник цеха
+              <input id="cNach" type="text" placeholder="ФИО">
+            </label>
+            <label>Телефон
+              <input id="cTelefon" type="text" placeholder="649195">
+            </label>
+            <label style="grid-column: 1/-1">Email
+              <input id="cEmail" type="text" placeholder="email@vaz.ru">
+            </label>
+          </div>
+        </fieldset>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script type="module" src="../js/app-cex.js"></script>
+</body>
+</html>

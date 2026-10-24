@@ -1,0 +1,6 @@
+{
+    "name": "sqlite3",
+    "version": "5.1.7",
+    "main": "./lib/sqlite3.js"
+  }
+  

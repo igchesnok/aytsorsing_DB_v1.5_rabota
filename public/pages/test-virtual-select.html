@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Тест VirtualSelect — 50000 записей</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    body { font-family: -apple-system, Segoe UI, sans-serif; padding: 20px; background: #f6f8fa; }
+    .test-container { max-width: 800px; margin: 0 auto; }
+    .stats { background: #fff; padding: 16px; border-radius: 8px; margin-bottom: 16px;
+             border: 1px solid #d0d7de; font-family: monospace; font-size: 13px; }
+    .stats-row { display: flex; justify-content: space-between; padding: 4px 0; }
+    .stats-label { color: #57606a; }
+    .stats-value { font-weight: 600; color: #0969da; }
+    .vs-wrapper { background: #fff; padding: 16px; border-radius: 8px; border: 1px solid #d0d7de; }
+    .log { background: #24292f; color: #c9d1d9; padding: 12px; border-radius: 6px;
+           font-family: monospace; font-size: 12px; max-height: 200px; overflow-y: auto;
+           margin-top: 16px; }
+    .log-entry { padding: 2px 0; }
+    .log-time { color: #7ee787; }
+    .log-msg { color: #c9d1d9; }
+    h1 { margin: 0 0 16px; font-size: 22px; }
+    .hint { color: #656d76; font-size: 13px; margin-bottom: 12px; }
+  </style>
+</head>
+<body>
+  <div class="test-container">
+    <h1>🧪 Тест VirtualSelect — 50 000 записей</h1>
+    <div class="hint">
+      Кликните по полю ниже. При первом открытии загрузятся первые 50 записей.
+      Прокрутите вниз — подгрузятся следующие 50. Введите «1» — найдутся все записи
+      с «1» в номере чертежа (их ~11000), но загрузятся только видимые.
+    </div>
+
+    <div class="stats">
+      <div class="stats-row">
+        <span class="stats-label">Всего записей в БД:</span>
+        <span class="stats-value" id="statTotal">—</span>
+      </div>
+      <div class="stats-row">
+        <span class="stats-label">Загружено в память клиента:</span>
+        <span class="stats-value" id="statLoaded">0</span>
+      </div>
+      <div class="stats-row">
+        <span class="stats-label">Отрисовано DOM-элементов:</span>
+        <span class="stats-value" id="statRendered">0</span>
+      </div>
+      <div class="stats-row">
+        <span class="stats-label">Количество HTTP-запросов:</span>
+        <span class="stats-value" id="statRequests">0</span>
+      </div>
+      <div class="stats-row">
+        <span class="stats-label">Выбранное значение:</span>
+        <span class="stats-value" id="statSelected">—</span>
+      </div>
+    </div>
+
+    <div class="vs-wrapper">
+      <label style="display:block; margin-bottom:8px; font-weight:600;">
+        Выберите деталь (виртуальный селект):
+      </label>
+      <div id="testSelect"></div>
+    </div>
+
+    <div class="log" id="log"></div>
+  </div>
+
+  <script type="module" src="../js/test-virtual-select.js"></script>
+</body>
+</html>

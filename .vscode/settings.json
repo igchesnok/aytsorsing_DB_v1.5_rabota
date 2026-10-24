@@ -1,0 +1,5 @@
+{
+  "terminal.integrated.env.windows": {
+    "PATH": "C:\\Users\\Y153434\\Documents\\dev\\прогр\\download-Chromium;${env:PATH}"
+  }
+}

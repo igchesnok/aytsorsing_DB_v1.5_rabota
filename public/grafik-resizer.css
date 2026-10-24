@@ -1,0 +1,94 @@
+/* ============================================================
+   grafik-resizer.css СТИЛИ РЕСАЙЗЕРОВ КОЛОНОК
+   ============================================================ */
+
+/* Ресайзер колонки */
+.grafik-col-resizer {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 6px;
+    cursor: col-resize;
+    background: transparent;
+    z-index: 10;
+    transition: background 0.2s;
+}
+
+.grafik-col-resizer:hover,
+.grafik-col-resizer.active {
+    background: rgba(9, 105, 218, 0.6);
+}
+
+.grafik-col-resizer::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 1px;
+    height: 20px;
+    border-left: 1px dotted rgba(255, 255, 255, 0.8);
+    border-right: 1px dotted rgba(255, 255, 255, 0.8);
+    pointer-events: none;
+}
+
+.grafik-col-resizer.active::after {
+    border-color: #fff;
+}
+
+/* Колонки с position: relative для ресайзеров */
+.grafik-col-name,
+.grafik-col-zak,
+.grafik-col-sum,
+.grafik-col-trud {
+    position: relative;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Фиксированные блоки */
+.grafik-header-fixed,
+.grafik-chart-fixed,
+.grafik-row-fixed {
+    transition: width 0.1s ease-out;
+}
+
+/* Ячейки в строках */
+.grafik-cell-name,
+.grafik-cell-zak,
+.grafik-cell-sum,
+.grafik-cell-trud {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Запрет выделения при ресайзе */
+body.grafik-resizing {
+    cursor: col-resize !important;
+    user-select: none !important;
+}
+
+body.grafik-resizing * {
+    cursor: col-resize !important;
+    user-select: none !important;
+}
+
+/* Адаптивность для маленьких экранов */
+@media (max-width: 768px) {
+    .grafik-col-resizer {
+        width: 4px;
+    }
+    
+    .grafik-col-name {
+        min-width: 150px !important;
+    }
+    
+    .grafik-col-zak,
+    .grafik-col-sum,
+    .grafik-col-trud {
+        min-width: 50px !important;
+    }
+}

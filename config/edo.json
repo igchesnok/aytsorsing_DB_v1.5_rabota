@@ -1,0 +1,34 @@
+{
+  "url": "https://tportal.vaz.ru",
+  "docs_url": "https://docs.vaz.ru/main.aspx?d_kod=",
+  "username": "Y153434",
+  "password": "Igches2610",
+  "reject_unauthorized": false,
+  "shablon": {
+    "sz_transport": "65555751",
+    "sz_sb": "65133697",
+    "sz_soglasovanie": "65842609"
+  },
+  "podpisant": {
+    "sz_transport": {
+      "PODP": "Ломакин А.Н.",
+      "PODP_KOD": "4663",
+      "O_OTV_ISP": "Начальник отдела"
+    },
+    "sz_sb": {
+      "PODP": "Савченко В.М.",
+      "PODP_KOD": "16385",
+      "O_OTV_ISP": "Заместитель директора по производству"
+    },
+    "sz_soglasovanie": {
+      "PODP": "Савченко В.М.",
+      "PODP_KOD": "16385",
+      "O_OTV_ISP": "Заместитель директора по производству"
+    }
+  },
+  "tema": {
+    "sz_transport": "Срочная заявка на {дата} {отправитель} - {получатель}",
+    "sz_sb": "об отгрузке {дата} {отправитель} - {получатель}",
+    "sz_soglasovanie": "О согласовании заказа на оказание услуг по мех. обработке по запросу ТКП № {номер}"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "name": "firmy-server",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "start": "\"C:/Users/Y153434/Documents/dev/прогр/download-Chromium/node.exe\" server.js"
+  },
+  "dependencies": {
+    "sqlite3": "^5.1.6",
+    "ws": "^8.16.0",
+    "puppeteer-core": "^23.11.1"
+  }
+}

@@ -1,0 +1,313 @@
+/* ============================================================
+РЕДАКТОР МАРШРУТОВ — СТИЛИ
+============================================================ */
+
+/* ===== ВЕРХНЯЯ ПАНЕЛЬ ===== */
+.route-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  padding: 8px 14px;
+  background: #e6f3ff;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.route-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+.route-topbar-right {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+.route-label {
+  font-weight: 600;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.route-filter {
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 12px;
+  min-width: 200px;
+}
+.route-filter:focus {
+  border-color: var(--primary);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(9,105,218,.15);
+}
+.route-select {
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 12px;
+  min-width: 280px;
+  background: #fff;
+}
+.route-count {
+  font-size: 11px;
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* ✅ T94: виртуальный селект «Позиция плана» (как на «Формировании плана») */
+#cmbDet {
+  width: 420px;
+  min-width: 280px;
+  flex-shrink: 1;
+}
+.route-det-clear {
+  flex-shrink: 0;
+  padding: 4px 10px;
+}
+
+/* ✅ T94: подсветка позиций плана без маршрута в списке «Детали плана» */
+.vtable-row.highlight-no-route {
+  background: #fff3e0 !important;
+}
+.vtable-row.highlight-no-route:hover {
+  background: #ffe0b2 !important;
+}
+.vtable-row.highlight-no-route.selected {
+  background: #ffd699 !important;
+}
+.vtable-row.highlight-no-route .vt-sticky {
+  background: #fff3e0 !important;
+}
+.vtable-row.highlight-no-route:hover .vt-sticky {
+  background: #ffe0b2 !important;
+}
+.row-badge-inline.highlight-no-route-badge {
+  background: #e8890c;
+  color: #fff;
+}
+
+/* ===== ОСНОВНОЙ КОНТЕНТ ===== */
+.content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.tab-content {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.tab-content .panel {
+  height: 100%;
+}
+
+/* ===== ФОРМА ШАГА ===== */
+#tabShagi .form-panel textarea {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 12px;
+  resize: vertical;
+  font-family: inherit;
+}
+#tabShagi .form-panel select,
+#tabOps .form-panel select,
+#tabShagi .form-panel input[type="date"],
+#tabOps .form-panel input[type="date"] {
+  padding: 4px 6px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+
+/* ===== ПОДВАЛ ===== */
+.route-footer {
+  flex-shrink: 0;
+  height: 200px;
+  min-height: 120px;
+  max-height: 400px;
+  padding: 6px 10px;
+  background: var(--card);
+  border-top: 1px solid var(--border);
+  overflow: hidden;
+}
+.route-footer fieldset {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+}
+.route-footer-grid {
+  flex: 1;
+  display: flex;
+  gap: 10px;
+  min-height: 0;
+}
+.route-footer-grid .table-panel {
+  flex: 1;
+  min-width: 0;
+}
+.route-footer-actions {
+  width: 280px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  background: #f6f8fa;
+  border-radius: 4px;
+}
+.route-counter {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 12px;
+  background: #e6f3ff;
+  border-radius: 4px;
+  width: 100%;
+  text-align: center;
+}
+
+/* ===== ПОДСКАЗКА ===== */
+.empty-state {
+  text-align: center;
+  padding: 30px;
+  color: var(--muted);
+  font-size: 12px;
+  font-style: italic;
+}
+
+/* ===== АДАПТИВНОСТЬ ===== */
+@media (max-width: 1000px) {
+  .route-topbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .route-topbar-left {
+    flex-wrap: wrap;
+  }
+  .route-footer-grid {
+    flex-direction: column;
+  }
+  .route-footer-actions {
+    width: 100%;
+  }
+}
+
+/* ===== ЗАБЛОКИРОВАННАЯ ВКЛАДКА ===== */
+.tab:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: #f6f8fa;
+}
+
+/* ===== СКРЫТЫЙ БЛОК ===== */
+#firstOpBlock.hidden {
+  display: none;
+}
+
+/* ===== ПОДСКАЗКА ДЛЯ СКРЫТОГО БЛОКА ===== */
+#firstOpBlock legend {
+  font-size: 11px;
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* ===== МАССОВОЕ СОЗДАНИЕ МАРШРУТОВ: КНОПКА И МОДАЛЬНОЕ ОКНО ===== */
+.missing-counter {
+  background: #fff3cd;
+  color: #7a5b00;
+}
+.btn-bulk {
+  width: 100%;
+  font-weight: 600;
+  border-color: var(--primary);
+  color: var(--primary);
+  background: #e6f3ff;
+}
+.btn-bulk:hover:not(:disabled) { background: #d0e3ff; }
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(31,35,40,.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal-overlay.hidden { display: none; }
+.modal-window {
+  width: min(700px, 94vw);
+  max-height: 88vh;
+  overflow: auto;
+  background: var(--card);
+  border-radius: 8px;
+  box-shadow: 0 12px 40px rgba(0,0,0,.25);
+  padding: 18px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.modal-title { margin: 0; font-size: 16px; }
+.modal-info {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+.modal-fieldset {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 12px 12px;
+  margin: 0;
+}
+.modal-fieldset legend {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 0 6px;
+}
+.modal-fieldset select {
+  width: 100%;
+  padding: 4px 6px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 12px;
+  margin-top: 2px;
+  background: #fff;
+}
+.modal-list-label {
+  font-size: 12px;
+  font-weight: 600;
+}
+.modal-list {
+  min-height: 120px;
+  max-height: 220px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.modal-list-row {
+  display: flex;
+  gap: 12px;
+  padding: 4px 10px;
+  font-size: 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+.modal-list-row:nth-child(even) { background: #f6f8fa; }
+.modal-list-row .mono {
+  font-family: Consolas, monospace;
+  min-width: 150px;
+  color: var(--primary);
+}
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}

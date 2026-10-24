@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Управление Фирмами</title>
+  <link rel="stylesheet" href="../style.css">
+ <link rel="stylesheet" href="../tab.css">
+   <link rel="stylesheet" href="../resizer.css">
+</head>
+<body>
+
+<div class="app">
+  <header class="app-header">
+    <h3>📋 Управление Фирмами</h3>
+    <div id="toast" class="toast hidden"></div>
+    <div id="wsStatus" class="ws-status disconnected">⚫ Offline</div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="tabFirma">🏢 Фирмы</button>
+    <button class="tab" data-tab="tabAdres">📌 Адреса</button>
+    <button class="tab" data-tab="tabKont">👤 Контакты</button>
+    <button class="tab" data-tab="tabDog">📄 Договоры</button>
+    <button class="tab" data-tab="tabUslov">⚙️ Условия договоров</button>
+  </nav>
+
+  <main class="content">
+
+    <!-- ============ ФИРМЫ ============ -->
+  <section id="tabFirma" class="tab-content active">
+  <div class="panel">
+
+    <!-- ЛЕВАЯ ТАБЛИЦА -->
+    <div class="table-panel">
+      <div class="toolbar">
+        <h3 class="table-title">Фирмы <span class="hint">клик по заголовку — новый</span></h3>
+        <div class="toolbar-btns">
+          <button class="btn btn-primary" id="btnFirmaAdd" title="Добавить" disabled>➕</button>
+          <button class="btn btn-success" id="btnFirmaSave" title="Сохранить" disabled>💾</button>
+          <button class="btn btn-danger" id="btnFirmaDel"  title="Удалить" disabled>X</button>
+          <button class="btn" id="btnFirmaPaste" title="Вставить из буфера">📋</button>
+        </div>
+      </div>
+
+      <div class="search-row">
+        <input type="text" id="firmaSearch" placeholder="🔍 Поиск по коду/названию/ИНН">
+      </div>
+
+      <div id="firmaTable" class="vtable-container"></div>
+    </div>
+
+    <!-- РЕСАЙЗЕР -->
+    <div class="resizer"></div>
+
+    <!-- ПРАВАЯ ФОРМА -->
+    <div class="form-panel form-wide">
+      <h4 id="firmaFormTitle">Данные фирмы</h4>
+
+      <div class="form-grid">
+        <label>Код
+          <input id="fKod" type="text">
+        </label>
+
+        <label>Наименование
+          <input id="fName" type="text">
+        </label>
+
+        <label>ИНН
+          <input id="fInn" type="text" maxlength="12">
+          <span id="innHint" class="hint"></span>
+        </label>
+
+        <!-- ✅ T84: город и цена перевозки — подготовка учёта стоимости
+             перевозки партии при выборе лучшего КП -->
+        <label>Город
+          <input id="fGorod" type="text">
+        </label>
+
+        <label>Юр. адрес
+          <input id="fAddr" type="text">
+        </label>
+
+        <label>Цена перевозки
+          <input id="fCenaPerevozki" type="text" inputmode="decimal"
+               title="Цена перевозки партии до фирмы — будет учитываться при выборе лучшего КП">
+        </label>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+    <!-- ============ АДРЕСА ============ -->
+    <section id="tabAdres" class="tab-content">
+      <div class="panel">
+        <div class="table-panel">
+          <div class="toolbar">
+            <h3 class="table-title" id="adresTitle">Факт. адреса</h3>
+            <div class="toolbar-btns">
+              <button class="btn btn-primary" id="btnAdresAdd" title="Добавить"  disabled>➕</button>
+              <button class="btn btn-success" id="btnAdresSave"title="Сохранить"  disabled>💾</button>
+              <button class="btn btn-danger" id="btnAdresDel"  title="Удалить"  disabled>Х</button>
+              <button class="btn" id="btnAdresPaste" title="Вставить из буфера">📋</button>
+            </div>
+          </div>
+          <div id="adresTable" class="vtable-container"></div>
+        </div>
+        <div class="resizer"></div>
+        <div class="form-panel form-wide">
+          <h4>Фактический адрес</h4>
+          <div class="form-grid">
+            <label style="grid-column: 1/-1">Адрес<input id="aAddr" type="text"></label>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ КОНТАКТЫ ============ -->
+    <section id="tabKont" class="tab-content">
+      <div class="panel">
+        <div class="table-panel">
+          <div class="toolbar">
+            <h3 class="table-title" id="kontTitle">Контакты</h3>
+            <div class="toolbar-btns">
+              <button class="btn btn-primary" id="btnKontAdd"  title="Добавить"   disabled>➕</button>
+              <button class="btn btn-success" id="btnKontSave" title="Сохранить"  disabled>💾</button>
+              <button class="btn btn-danger" id="btnKontDel"   title="Удалить"     disabled>🗑</button>
+              <button class="btn" id="btnKontPaste" title="Вставить из буфера">📋</button>
+            </div>
+          </div>
+          <div id="kontTable" class="vtable-container"></div>
+        </div>
+        <div class="resizer"></div>
+        <div class="form-panel form-wide">
+          <h4>Контактное лицо</h4>
+          <div class="form-grid">
+            <label>ФИО<input id="kFio" type="text"></label>
+            <label>Телефон<input id="kTel" type="text"></label>
+            <label>Email<input id="kEmail" type="text"></label>
+            <label class="chk"><input id="kAktiv" type="checkbox" checked> Активен</label>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ ДОГОВОРЫ ============ -->
+    <section id="tabDog" class="tab-content">
+      <div class="panel">
+
+        <!-- ЛЕВАЯ ТАБЛИЦА -->
+        <div class="table-panel">
+          <div class="toolbar">
+            <h3 class="table-title" id="dogTitle">Договоры</h3>
+            <div class="toolbar-btns">
+              <button class="btn btn-primary" id="btnDogAdd"  title="Добавить"  disabled>➕</button>
+              <button class="btn btn-success" id="btnDogSave" title="Сохранить" disabled>💾</button>
+              <button class="btn btn-danger" id="btnDogDel"   title="Удалить"   disabled>Х</button>
+              <button class="btn" id="btnDogPaste" title="Вставить из буфера">📋</button>
+            </div>
+          </div>
+          <div id="dogTable" class="vtable-container"></div>
+        </div>
+
+        <!-- РЕСАЙЗЕР -->
+        <div class="resizer"></div>
+
+        <!-- ПРАВАЯ ФОРМА -->
+        <div class="form-panel form-wide">
+          <h4 id="dogFormTitle">Договор</h4>
+
+          <!-- ОСНОВНЫЕ ПОЛЯ -->
+          <div class="form-grid cols-3">
+            <label>№ договора
+              <input id="dNom" type="text">
+            </label>
+            <label>Дата
+              <input id="dData" type="date">
+            </label>
+            <label>Дата окончания
+              <input id="dDataOk" type="date">
+            </label>
+          </div>
+
+          <label style="grid-column: 1/-1">Вид работ (по договору в целом)
+            <select id="dVidRabot"><option value="">—</option></select>
+          </label>
+
+          <div class="form-grid cols-3">
+            <label>Расч. счёт
+              <input id="dSchet" type="text">
+            </label>
+            <label>Стоимость
+              <input id="dCost" type="text">
+            </label>
+            <label>НДС, %
+              <input id="dHdc" type="text">
+            </label>
+          </div>
+
+          <!-- ПРЕДОПЛАТА -->
+          <fieldset>
+            <legend>Предоплата</legend>
+            <div class="form-grid cols-3">
+              <label>Размер, %<input id="dPrePr" type="text"></label>
+              <label>Срок (дн)<input id="dPreData" type="text"></label>
+              <label>Дата аванса<input id="dAvansData" type="date"></label>
+              <label style="grid-column: 1/-1">Условия предоплаты
+                <select id="dPredYcl"><option value="">—</option></select>
+              </label>
+            </div>
+          </fieldset>
+
+          <!-- СРОКИ -->
+          <fieldset>
+            <legend>Сроки</legend>
+            <div class="form-grid cols-2">
+              <label>Приёмка (дн)
+                <input id="dPriemData" type="text">
+              </label>
+              <label>Подсчёт приёмки
+                <select id="dOtschetPriem">
+                  <option>рабочих дней</option>
+                  <option>календарных дней</option>
+                </select>
+              </label>
+              <label>Оплата (дн)
+                <input id="dOplataData" type="text">
+              </label>
+              <label>Подсчёт оплаты
+                <select id="dOtschetOpl">
+                  <option>рабочих дней</option>
+                  <option>календарных дней</option>
+                </select>
+              </label>
+            </div>
+          </fieldset>
+
+        </div> <!-- form-panel -->
+
+      </div> <!-- panel -->
+    </section>
+
+
+    <!-- ============ УСЛОВИЯ ДОГОВОРОВ ============ -->
+    <section id="tabUslov" class="tab-content">
+      <div class="panel">
+        <div class="table-panel">
+          <div class="toolbar">
+            <h3 class="table-title">Условия договоров</h3>
+            <div class="toolbar-btns">
+              <button class="btn btn-primary" id="btnUslovAdd"  title="Добавить"   disabled>➕</button>
+              <button class="btn btn-success" id="btnUslovSave" title="Сохранить" disabled>💾</button>
+              <button class="btn btn-danger" id="btnUslovDel"   title="Удалить"   disabled>Х</button>
+              <button class="btn" id="btnUslovPaste" title="Вставить из буфера">📋</button>
+            </div>
+          </div>
+          <div id="uslovTable" class="vtable-container"></div>
+        </div>
+        <div class="resizer"></div>
+        <div class="form-panel form-wide">
+          <h4>Условие договора</h4>
+          <div class="form-grid">
+            <label style="grid-column: 1/-1">Содержание<input id="uText" type="text"></label>
+            <label>Категория
+              <select id="uKat">
+                <option value="Вид работ">Вид работ</option>
+                <option value="Условия предоплаты">Условия предоплаты</option>
+              </select>
+            </label>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+ <!-- ✅ ВАЖНО: type="module" для ES-модулей -->
+<script type="module" src="../js/app-firms.js"></script>
+</body>
+</html>

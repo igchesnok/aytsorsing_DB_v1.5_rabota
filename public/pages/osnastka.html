@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Оснастка — характеристики деталей</title>
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="../resizer.css">
+</head>
+<body>
+<div class="app">
+  <header class="app-header">
+    <h1>🔧 Оснастка — характеристики деталей</h1>
+    <div id="toast" class="toast hidden"></div>
+    <div id="wsStatus" class="ws-status disconnected">⚫ Offline</div>
+  </header>
+
+  <main class="content" style="padding: 8px;">
+    <div class="panel">
+      <!-- ===== ЛЕВАЯ ПАНЕЛЬ: Фильтры + Таблица ===== -->
+      <div class="table-panel">
+        <!-- Блок фильтров -->
+        <div class="filter-section">
+          <div class="filter-row">
+            <label class="filter-label">№ чертежа:</label>
+            <input type="text" id="fltNomer" class="filter-input" placeholder="Поиск...">
+            <button class="filter-clear" id="btnClearNomer" title="Очистить">×</button>
+          </div>
+          <div class="filter-row">
+            <label class="filter-label">Наименование:</label>
+            <input type="text" id="fltNaim" class="filter-input" placeholder="Поиск...">
+            <button class="filter-clear" id="btnClearNaim" title="Очистить">×</button>
+          </div>
+          <div class="filter-row">
+            <label class="filter-label">Авто/Моб/Дет:</label>
+            <input type="text" id="fltAvto" class="filter-input" placeholder="Поиск...">
+            <button class="filter-clear" id="btnClearAvto" title="Очистить">×</button>
+          </div>
+
+          <div class="filter-checkboxes">
+            <label class="filter-chk"><input type="checkbox" id="fltTO"> ТО (закалка)</label>
+            <label class="filter-chk"><input type="checkbox" id="fltPPD"> ППД</label>
+            <label class="filter-chk"><input type="checkbox" id="fltTisn"> Тиснение</label>
+            <label class="filter-chk"><input type="checkbox" id="fltPokr"> Покрытие</label>
+            <label class="filter-chk"><input type="checkbox" id="fltTONA"> TONA</label>
+            <button class="btn btn-sm" id="btnClearAllFilters">Сбросить все</button>
+          </div>
+        </div>
+
+        <!-- Toolbar таблицы -->
+        <div class="toolbar">
+          <h3 class="table-title">Оснастка <span class="hint">клик по заголовку — новая запись</span></h3>
+          <div class="toolbar-btns">
+              <button class="btn btn-primary" id="btnOsnAdd" data-crud="add" title="Добавить" disabled>➕</button>
+              <button class="btn btn-success" id="btnOsnSave" data-crud="save" title="Сохранить" disabled>💾</button>
+              <button class="btn btn-danger"  id="btnOsnDel" data-crud="del" title="Удалить" disabled>✖</button>
+              <button class="btn" id="btnOsnPaste" data-crud="paste" title="Вставить из буфера">📋</button>
+          </div>
+        </div>
+
+        <!-- Виртуальная таблица -->
+        <div id="osnTable" class="vtable-container"></div>
+      </div>
+
+      <!-- Вертикальный ресайз -->
+      <div class="resizer"></div>
+
+      <!-- ===== ПРАВАЯ ПАНЕЛЬ: Форма ===== -->
+      <div class="form-panel form-wide">
+        <h4 id="osnFormTitle">Данные оснастки</h4>
+
+        <!-- Основные поля -->
+        <fieldset>
+          <legend>Основные данные</legend>
+          <div class="form-grid cols-3">
+            <label>№ чертежа *
+              <input id="oNomer" type="text">
+              <span id="nomerHint" class="hint"></span>
+            </label>
+            <label>Наименование
+              <input id="oNaim" type="text">
+            </label>
+            <label>Авто/Моб/Дет
+              <input id="oAvto" type="text">
+            </label>
+            <label>Марка материала
+              <input id="oMarka" type="text">
+            </label>
+          </div>
+        </fieldset>
+
+        <!-- Габариты и вес -->
+        <fieldset>
+          <legend>Габариты и вес</legend>
+          <div class="form-grid cols-3">
+            <label>Вес детали, кг
+              <input id="oVesDet" type="text">
+            </label>
+            <label>Вес заготовки, кг
+              <input id="oVesZag" type="text">
+            </label>
+            <label>Трудоемкость ПТО, н-ч
+              <input id="oTrudPTO" type="text">
+            </label>
+            <label>Длина, мм
+              <input id="oDlina" type="text">
+            </label>
+            <label>Ширина, мм
+              <input id="oShirina" type="text">
+            </label>
+            <label>Высота, мм
+              <input id="oVysota" type="text">
+            </label>
+          </div>
+        </fieldset>
+
+        <!-- Технологические операции -->
+        <fieldset>
+          <legend>Технологические операции</legend>
+          <div class="form-grid cols-3">
+            <label class="chk"><input id="oTO" type="checkbox"> ТО (закалка)</label>
+            <label class="chk"><input id="oPPD" type="checkbox"> ППД</label>
+            <label class="chk"><input id="oTisn" type="checkbox"> Тиснение</label>
+            <label class="chk"><input id="oPokr" type="checkbox"> Покрытие</label>
+            <label class="chk"><input id="oTONA" type="checkbox"> TONA (азот/цемент)</label>
+          </div>
+        </fieldset>
+
+        <!-- Трудоемкость и стоимость -->
+        <fieldset>
+          <legend>Трудоемкость и стоимость</legend>
+          <div class="form-grid cols-3">
+            <label>Цена заготовки, ₽
+              <input id="oCenaZag" type="text">
+            </label>
+            <label>Фрез. универс., н-ч
+              <input id="oFrezUniv" type="text">
+            </label>
+            <label>Фрез. ЧПУ, н-ч
+              <input id="oFrezChpu" type="text">
+            </label>
+            <label>Токарн., н-ч
+              <input id="oTokarn" type="text">
+            </label>
+            <label>Токарн. ЧПУ, н-ч
+              <input id="oTokarnChpu" type="text">
+            </label>
+          </div>
+        </fieldset>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script type="module" src="../js/app-osnastka.js"></script>
+</body>
+</html>

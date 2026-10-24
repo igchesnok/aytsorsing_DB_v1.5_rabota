@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Система управления</title>
+  <link rel="stylesheet" href="main_menu.css">
+</head>
+<body>
+  <div class="main-menu">
+      <!-- ✅ НОВЫЙ БЛОК: информация о пользователе -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+      <div id="userInfo" style="font-size: 14px; color: #0969da; font-weight: 600;"></div>
+      <button id="logoutBtn" class="menu-btn" style="padding: 8px 16px; background: #cf222e; color: white; border: none;">
+        🚪 Выйти
+      </button>
+    </div>
+    <header class="menu-header">
+      <h1>🏭 Система управления производством</h1>
+    </header>
+
+    <div class="menu-grid">
+      <!-- ===== ЗАДАЧИ ===== -->
+      <section class="menu-section tasks">
+        <h2>📋 Задачи</h2>
+        <div class="menu-buttons">
+          <button class="menu-btn" data-page="pages/plan.html">1. Формирование плана</button>
+          <button class="menu-btn" data-page="pages/grafik.html">2. График изготовления</button>
+          
+          <div class="menu-group">
+            <div class="group-label">Для поз. плана с новым № черт. без КП</div>
+            <button class="menu-btn" data-page="pages/requests.html">3. Запросы на ком. предложение</button>
+            <button class="menu-btn" data-page="pages/offers.html">4. Занесение ком. предложение</button>
+          </div>
+
+          <button class="menu-btn" data-page="pages/route-editor.html">5. Техн. маршрут поз.</button>
+          
+          <div class="menu-group">
+            <div class="group-label">Для поз. плана без КП</div>
+            <button class="menu-btn" data-page="pages/orders.html">6. Согласование Заказов к договорам</button>
+          </div>
+
+          <button class="menu-btn" data-page="pages/plan-perevozok.html">7. План транспортировки поз.</button>
+          <button class="menu-btn" data-page="pages/transport-ops.html">8. Транспортные операции</button>
+          <button class="menu-btn" data-page="pages/protokol-soveshchaniy.html">9. 📝 Протокол совещаний</button>
+          <button class="menu-btn" data-page="pages/quality.html">9. Приемка ОТК</button>
+          <button class="menu-btn" data-page="pages/defects.html">10. Работа с браком</button>
+          <!-- ✅ T102: страница «Оплата работ» -->
+        <button class="menu-btn" data-page="pages/payment.html">11. 💳 Оплата работ</button>
+        </div>
+      </section>
+
+      <!-- ===== СПРАВОЧНИКИ ===== -->
+      <section class="menu-section references">
+        <h2> Справочники</h2>
+        <div class="menu-buttons">
+          <button class="menu-btn primary" data-page="pages/firms.html">🏢 Фирмы контрагенты</button>
+          <button class="menu-btn" data-page="pages/vidy-rabot.html">💼 Виды работ по договорам</button>
+          <button class="menu-btn" data-page="pages/carriers.html">🚛 Перевозчики</button>
+          <button class="menu-btn" data-page="pages/osnastka.html">🔧 Оснастка</button>
+          <button class="menu-btn" data-page="pages/transport-types.html">📦 Типы перевозок</button>
+                  <button class="menu-btn" data-page="pages/cex.html">🏭 Цеха затрат</button>
+                  <button class="menu-btn" data-page="pages/tech.html">👨‍🔬 Ответственные технологи</button>
+
+        <!-- ✅ НОВАЯ КНОПКА Admin-->
+    <button class="menu-btn" data-page="pages/users.html" id="btnUsersMenu" style="display: none;"> 👥 Пользователи</button>
+        <!-- ✅ T52: настройки ЭДО (config/edo.json) — только для админа -->
+    <button class="menu-btn" data-page="pages/edo-nastroyki.html" id="btnEdoSettingsMenu" style="display: none;"> ⚙️ Настройки ЭДО (ВАЗ)</button>
+        </div>
+      </section>
+
+      <!-- ===== ОТЧЕТЫ ===== -->
+      <section class="menu-section reports">
+        <h2>📊 Отчеты</h2>
+        <div class="menu-buttons">
+          <button class="menu-btn" data-page="production-plan.html">План изготовления</button>
+          <button class="menu-btn" data-page="plan-execution.html">Выполнение плана</button>
+          <button class="menu-btn" data-page="analysis.html">Анализ выполнения</button>
+          <button class="menu-btn" data-page="cutting.html">Порезка заготовок</button>
+          <button class="menu-btn" data-page="shipments.html">Перевозки</button>
+          <button class="menu-btn" data-page="pages/flat-table.html">Плоская таблица</button>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

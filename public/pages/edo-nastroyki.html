@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Настройки ЭДО — портал АВТОВАЗ</title>
+<link rel="stylesheet" href="../style.css">
+<style>
+  /* ✅ T52: страница графического редактирования config/edo.json.
+     Стили локальные — как в users.html (role-цвета), чтобы не
+     трогать общий style.css */
+  /* ✅ T53: вертикальная прокрутка страницы — body в style.css
+     overflow:hidden, скроллит внутренний контейнер (как .content) */
+  .edo-wrap { flex: 1; min-height: 0; overflow-y: auto; padding: 10px 12px 20px; max-width: 1100px; }
+  .edo-note {
+    background: #fff8e1; border: 1px solid #e0c36a; border-radius: 6px;
+    padding: 8px 12px; margin: 0 0 12px; font-size: 12.5px; color: #6d5200;
+  }
+  .edo-note b { color: #4d3b00; }
+  .edo-actions { display: flex; gap: 8px; align-items: center; margin: 0 0 14px; flex-wrap: wrap; }
+  .edo-fs {
+    border: 1px solid var(--border, #c3ccd6); border-radius: 8px;
+    padding: 10px 14px 14px; margin: 0 0 14px; background: #fff;
+  }
+  .edo-fs legend { font-size: 13.5px; font-weight: 700; color: #1a2733; padding: 0 6px; }
+  .edo-fs .edo-fs-sub { font-size: 11.5px; color: #656d76; margin: -2px 0 10px 4px; }
+  .edo-grid { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 8px 12px; align-items: center; }
+  .edo-grid label.lbl { font-size: 12.5px; color: #24292f; text-align: right; }
+  .edo-grid input[type="text"], .edo-grid input[type="password"] {
+    width: 100%; box-sizing: border-box; padding: 5px 8px;
+    border: 1px solid var(--border, #c3ccd6); border-radius: 5px; font-size: 13px;
+  }
+  .edo-grid input.wide { grid-column: 2; }
+  .edo-pwd-cell { display: flex; gap: 6px; align-items: center; }
+  .edo-pwd-cell input { flex: 1; min-width: 0; }
+  .edo-pwd-cell .btn { padding: 4px 10px; font-size: 12px; }
+  .edo-chk { display: flex; gap: 6px; align-items: center; font-size: 12.5px; grid-column: 2; }
+  .edo-chk input { width: auto; }
+  /* --- темы СЗ --- */
+  .edo-tema { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 8px 12px; align-items: center; }
+  .edo-tema label.lbl { font-size: 12.5px; text-align: right; }
+  .edo-tema label.lbl small { display: block; color: #656d76; font-weight: 400; font-size: 10.5px; }
+  .edo-tema input { width: 100%; box-sizing: border-box; padding: 5px 8px;
+    border: 1px solid var(--border, #c3ccd6); border-radius: 5px; font-size: 13px; }
+  .edo-tokens { grid-column: 2; display: flex; flex-wrap: wrap; gap: 4px 6px; font-size: 11px; color: #57606a; }
+  .edo-tokens .tok {
+    cursor: pointer; user-select: none; background: #eef3f8; border: 1px solid #c3ccd6;
+    border-radius: 4px; padding: 1px 7px; font-family: Consolas, monospace; color: #0b57a4;
+  }
+  .edo-tokens .tok:hover { background: #dbe9f7; border-color: #0969da; }
+  .edo-tokens .tok-desc { align-self: center; }
+  /* --- подписанты: строки по 3 поля --- */
+  .edo-podp-row { display: grid; grid-template-columns: 220px minmax(0, 1fr) 170px minmax(0, 1fr); gap: 8px 10px; align-items: center; margin: 0 0 8px; }
+  .edo-podp-row label.lbl { font-size: 12.5px; text-align: right; }
+  .edo-podp-row label.lbl small { display: block; color: #656d76; font-weight: 400; font-size: 10.5px; }
+  .edo-podp-row input { width: 100%; box-sizing: border-box; padding: 5px 8px;
+    border: 1px solid var(--border, #c3ccd6); border-radius: 5px; font-size: 13px; }
+  .edo-podp-head { display: grid; grid-template-columns: 220px minmax(0, 1fr) 170px minmax(0, 1fr); gap: 8px 10px; margin: 0 0 6px; }
+  .edo-podp-head span { font-size: 11px; font-weight: 600; color: #57606a; }
+  .edo-podp-head span:nth-child(2) { grid-column: 2; }
+  .edo-podp-head span:nth-child(4) { grid-column: 4; }
+  .edo-dirty { color: #b3541e; font-size: 12px; font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="app">
+<header class="app-header">
+<h1>⚙️ Настройки ЭДО — портал АВТОВАЗ</h1>
+<div id="toast" class="toast hidden"></div>
+</header>
+
+<div class="edo-wrap">
+  <div class="edo-note">
+    Файл настроек: <b>config/edo.json</b>. Сохранённые значения применяются <b>сразу, без перезапуска программы</b> —
+    файл читается при каждом создании служебной записки.
+    Пустое значение поля шаблона/подписанта/темы = встроенное значение по умолчанию.
+  </div>
+
+  <div class="edo-actions">
+    <button class="btn btn-primary" id="btnEdoSave">💾 Сохранить настройки</button>
+    <button class="btn" id="btnEdoTest">🔌 Проверить соединение</button>
+    <button class="btn" id="btnEdoReload">↺ Перечитать из файла</button>
+    <span id="edoDirty" class="edo-dirty" style="display:none;">● есть несохранённые изменения</span>
+  </div>
+
+  <!-- ===== ПОДКЛЮЧЕНИЕ ===== -->
+  <fieldset class="edo-fs">
+    <legend>Подключение к порталу</legend>
+    <div class="edo-grid">
+      <label class="lbl" for="cfgUrl">URL портала (url):</label>
+      <input type="text" id="cfgUrl" placeholder="https://tportal.vaz.ru">
+      <label class="lbl" for="cfgDocsUrl">Переход к документу (docs_url):</label>
+      <input type="text" id="cfgDocsUrl" placeholder="https://docs.vaz.ru/main.aspx?d_kod=">
+      <label class="lbl" for="cfgUsername">Логин (username):</label>
+      <input type="text" id="cfgUsername" autocomplete="off">
+      <label class="lbl" for="cfgPassword">Пароль (password):</label>
+      <div class="edo-pwd-cell">
+        <input type="password" id="cfgPassword" autocomplete="off">
+        <button class="btn" id="btnEdoPwd" title="Показать/скрыть пароль">👁</button>
+      </div>
+      <label class="edo-chk" for="cfgRejectUnauth">
+        <input type="checkbox" id="cfgRejectUnauth">
+        Не проверять сертификат сервера (reject_unauthorized)
+      </label>
+    </div>
+  </fieldset>
+
+  <!-- ===== ТЕМЫ СЗ ===== -->
+  <fieldset class="edo-fs">
+    <legend>Темы служебных записок (краткое содержание, krat_sod)</legend>
+    <div class="edo-fs-sub">Блок <b>"tema"</b> файла config/edo.json. Подставляемые значения вставляются кнопками-токенами; в момент создания СЗ на портале заменяются реальными данными.</div>
+    <div class="edo-tema">
+      <label class="lbl" for="temaTransport">СЗ на транспорт<small>шаг «Создать СЗ» вкладки «Документы» · tema.sz_transport</small></label>
+      <input type="text" id="temaTransport">
+      <span class="edo-tokens" data-target="temaTransport">
+        <span class="tok" data-token="{дата}">{дата}</span><span class="tok-desc">— дата отгрузки (ДД.ММ.ГГГГ)</span>
+        <span class="tok" data-token="{отправитель}">{отправитель}</span><span class="tok-desc">— фирма-отправитель</span>
+        <span class="tok" data-token="{получатель}">{получатель}</span><span class="tok-desc">— фирма-получатель</span>
+      </span>
+
+      <label class="lbl" for="temaSb">СЗ в СБ об отгрузке<small>кнопка «Создать СЗ в СБ» · tema.sz_sb</small></label>
+      <input type="text" id="temaSb">
+      <span class="edo-tokens" data-target="temaSb">
+        <span class="tok" data-token="{дата}">{дата}</span><span class="tok-desc">— дата отгрузки (ДД.ММ.ГГГГ)</span>
+        <span class="tok" data-token="{отправитель}">{отправитель}</span><span class="tok-desc">— фирма-отправитель</span>
+        <span class="tok" data-token="{получатель}">{получатель}</span><span class="tok-desc">— фирма-получатель</span>
+      </span>
+
+      <label class="lbl" for="temaSoglas">СЗ согласования заказа<small>шаг 1 «СЗ в ЭДО» страницы «Внесение КП» · tema.sz_soglasovanie</small></label>
+      <input type="text" id="temaSoglas">
+      <span class="edo-tokens" data-target="temaSoglas">
+        <span class="tok" data-token="{номер}">{номер}</span><span class="tok-desc">— номер запроса ТКП</span>
+        <span class="tok" data-token="{дата}">{дата}</span><span class="tok-desc">— дата запроса</span>
+        <span class="tok" data-token="{фирмы}">{фирмы}</span><span class="tok-desc">— фирмы лучших КП</span>
+      </span>
+    </div>
+  </fieldset>
+
+  <!-- ===== ШАБЛОНЫ ===== -->
+  <fieldset class="edo-fs">
+    <legend>Шаблоны СЗ на портале (идентификаторы шаблонов, d_kod)</legend>
+    <div class="edo-fs-sub">Блок <b>"shablon"</b> файла config/edo.json.</div>
+    <div class="edo-grid">
+      <label class="lbl" for="shablonTransport">СЗ на транспорт (sz_transport):</label>
+      <input type="text" id="shablonTransport">
+      <label class="lbl" for="shablonSb">СЗ в СБ об отгрузке (sz_sb):</label>
+      <input type="text" id="shablonSb">
+      <label class="lbl" for="shablonSoglas">СЗ согласования заказа (sz_soglasovanie):</label>
+      <input type="text" id="shablonSoglas">
+    </div>
+  </fieldset>
+
+  <!-- ===== ТИП ПРИСВОЕНИЯ НОМЕРА СЗ (✅ T55) ===== -->
+  <fieldset class="edo-fs">
+    <legend>Присвоение номера СЗ в СБ об отгрузке (блок "sz_nomer")</legend>
+    <div class="edo-fs-sub">Как портал присваивает номер при создании СЗ в СБ об отгрузке: <b>otlozh</b> — отложенное присвоение (rd=2, ch_otl=2; номер появится после регистрации документа на портале), <b>avto</b> — автосоздание (rd=1, ch_otl=1; номер присваивается сразу). Пусто = «otlozh».</div>
+    <div class="edo-grid">
+      <label class="lbl">Тип создания номера (sz_nomer.sz_sb):</label>
+      <span style="display: flex; gap: 18px; align-items: center; padding: 4px 0;">
+        <label style="display: flex; gap: 6px; align-items: center; cursor: pointer;">
+          <input type="radio" name="szNomerSb" id="szNomerSbOtlozh" value="otlozh"> Отложенное (otlozh)
+        </label>
+        <label style="display: flex; gap: 6px; align-items: center; cursor: pointer;">
+          <input type="radio" name="szNomerSb" id="szNomerSbAvto" value="avto"> Автосоздание (avto)
+        </label>
+      </span>
+    </div>
+  </fieldset>
+
+  <!-- ===== ПОДПИСАНТЫ ===== -->
+  <fieldset class="edo-fs">
+    <legend>Подписывающие (карточка документа на портале)</legend>
+    <div class="edo-fs-sub">Блок <b>"podpisant"</b> файла config/edo.json — значения подменяют данные карточки при создании СЗ (как в VBA setDefaults). Пустое значение = встроенный дефолт.</div>
+    <div class="edo-podp-head">
+      <span></span><span>Подписывающий (PODP)</span><span>Код (PODP_KOD)</span><span>Должность (O_OTV_ISP)</span>
+    </div>
+    <div class="edo-podp-row">
+      <label class="lbl" for="podpTransportP">СЗ на транспорт (sz_transport):</label>
+      <input type="text" id="podpTransportP">
+      <input type="text" id="podpTransportK">
+      <input type="text" id="podpTransportI">
+    </div>
+    <div class="edo-podp-row">
+      <label class="lbl" for="podpSbP">СЗ в СБ об отгрузке (sz_sb):</label>
+      <input type="text" id="podpSbP">
+      <input type="text" id="podpSbK">
+      <input type="text" id="podpSbI">
+    </div>
+    <div class="edo-podp-row" style="margin-bottom:0;">
+      <label class="lbl" for="podpSoglasP">СЗ согласования заказа (sz_soglasovanie):</label>
+      <input type="text" id="podpSoglasP">
+      <input type="text" id="podpSoglasK">
+      <input type="text" id="podpSoglasI">
+    </div>
+  </fieldset>
+</div>
+</div>
+<script type="module" src="../js/app-edo-settings.js"></script>
+</body>
+</html>

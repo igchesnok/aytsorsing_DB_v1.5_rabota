@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Вход в систему</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      height: 100vh;
+      margin: 0;
+    }
+    .login-card {
+      background: white;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      width: 400px;
+    }
+    .login-card h1 {
+      text-align: center;
+      color: #0969da;
+      margin-bottom: 30px;
+    }
+    .login-card .form-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .login-card label {
+      display: flex;
+      flex-direction: column;
+      font-size: 13px;
+      font-weight: 600;
+      color: #656d76;
+    }
+    .login-card input {
+      padding: 10px 12px;
+      border: 1px solid #d0d7de;
+      border-radius: 6px;
+      font-size: 14px;
+      margin-top: 6px;
+    }
+    .login-card input:focus {
+      border-color: #0969da;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(9,105,218,.15);
+    }
+    .login-btn {
+      width: 100%;
+      padding: 12px;
+      background: #0969da;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    .login-btn:hover { background: #0550ae; }
+    .login-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .error-msg {
+      color: #cf222e;
+      text-align: center;
+      margin-top: 12px;
+      font-size: 13px;
+      min-height: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-card">
+    <h1>🏭 Вход в систему</h1>
+    <form id="loginForm">
+      <div class="form-grid">
+        <label>Логин
+          <input id="loginInput" type="text" autocomplete="username" required>
+        </label>
+        <label>Пароль
+          <input id="passwordInput" type="password" autocomplete="current-password" required>
+        </label>
+        <button type="submit" class="login-btn" id="loginBtn">Войти</button>
+        <div class="error-msg" id="errorMsg"></div>
+      </div>
+    </form>
+  </div>
+  <script type="module" src="../js/app-login.js"></script>
+</body>
+</html>

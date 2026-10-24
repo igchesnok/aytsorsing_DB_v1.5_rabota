@@ -1,0 +1,768 @@
+/* ========== RESET ========== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #f0f2f5;
+  --card: #fff;
+  --border: #d0d7de;
+  --primary: #0969da;
+  --success: #1a7f37;
+  --danger: #cf222e;
+  --text: #1f2328;
+  --muted: #656d76;
+  --row-h: 26px;
+  --row-hover: #f6f8fa;
+  --row-sel: #ddf4ff;
+  --radius: 5px;
+}
+
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  font-size: 13px;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  overflow: hidden;
+}
+
+.app { display: flex; flex-direction: column; height: 100vh; }
+
+/* ========== HEADER ========== */
+.app-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 6px 14px; background: var(--card);
+ 
+}
+.app-header h1 { font-size: 15px; }
+
+
+/* ========== CONTENT ========== */
+.content {
+  flex: 1;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+
+/* ========== PANEL ========== */
+.panel {
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.vertikal { flex-direction: row; }
+.gorizont { flex-direction: column; }
+
+.table-panel {
+  flex: 1;
+  width: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 1px;
+  margin: 2px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  min-width: 0;
+}
+
+.form-panel {
+  width: 100%;
+  min-width: 280px;
+  max-width: none;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1px;
+  margin: 2px;
+  overflow-y: auto;
+}
+
+.form-panel.form-wide { width: 520px; }
+
+.form-panel h3,
+.form-panel h4 {
+  font-size: 13px;
+  margin-bottom: 8px;
+  color: var(--primary);
+}
+
+/* ========== TOOLBAR ========== */
+.toolbar {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 2px 4px; 
+  background: #f6f8fa;
+}
+.toolbar h3 { font-size: 13px; margin: 0; display: flex; align-items: center; gap: 8px; }
+.table-title { cursor: pointer; user-select: none; }
+.table-title:hover { color: var(--primary); }
+.table-title .hint { font-size: 10px; color: var(--muted); font-weight: normal; font-style: italic; }
+.toolbar-btns { display: flex; gap: 4px; }
+
+.search-row { padding: 4px 8px; }
+.search-row input {
+  width: 100%; padding: 4px 8px; font-size: 12px;
+  border: 1px solid var(--border); border-radius: 4px;
+}
+
+/* ========== BUTTONS ========== */
+.btn {
+  padding: 2px 6px; border: 1px solid var(--border); border-radius: 4px;
+  background: var(--card); cursor: pointer; font-size: 12px;
+  transition: .15s;
+}
+.btn:hover:not(:disabled) { background: var(--row-hover); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn-primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+.btn-primary:hover:not(:disabled) { background: #0550ae; }
+.btn-success { background: var(--success); color: #fff; border-color: var(--success); }
+.btn-success:hover:not(:disabled) { background: #116329; }
+.btn-danger { background: var(--danger); color: #fff; border-color: var(--danger); }
+.btn-danger:hover:not(:disabled) { background: #a40e26; }
+
+/* ========== FORMS ========== */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.form-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+.form-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+.form-grid label {
+  display: flex; flex-direction: column;
+  font-size: 11px; color: var(--muted); font-weight: 600;
+}
+.form-grid input, .form-grid select {
+  padding: 4px 6px; border: 1px solid var(--border); border-radius: 4px;
+  font-size: 12px; margin-top: 2px; background: #fff;
+}
+.form-grid input:focus, .form-grid select:focus {
+  border-color: var(--primary); outline: none;
+  box-shadow: 0 0 0 2px rgba(9,105,218,.15);
+}
+.form-grid input.invalid { border-color: var(--danger); background: #fff5f5; }
+.form-grid input.valid { border-color: var(--success); }
+.hint { font-size: 10px; color: var(--danger); margin-top: 1px; }
+
+fieldset {
+  width: 100%;
+  border: 1px solid var(--border); border-radius: 4px;
+  padding: 6px 8px;
+}
+fieldset legend { font-size: 11px; font-weight: 600; color: var(--primary); padding: 0 4px; }
+
+.chk { flex-direction: row !important; align-items: center; gap: 6px; font-weight: normal !important; color: var(--text) !important; }
+.chk input { margin: 0; }
+
+/* ========== TOAST ========== */
+.toast {
+  position: fixed; top: 12px; right: 12px; z-index: 9999;
+  padding: 8px 16px; border-radius: 4px;
+  font-size: 12px; font-weight: 600; color: #fff;
+  box-shadow: 0 4px 12px rgba(0,0,0,.2); transition: .3s;
+}
+.toast.success { background: var(--success); }
+.toast.error { background: var(--danger); }
+.toast.warning { background: #bf8700; }
+.toast.hidden { opacity: 0; pointer-events: none; transform: translateY(-20px); }
+
+.empty-state { text-align: center; padding: 20px; color: var(--muted); font-size: 12px; }
+
+/* Заблокированная строка — ОСТАВЛЕНО, т.к. это UI, не таблица */
+.vtable-row.locked {
+  background: #fff8e1 !important;
+  cursor: not-allowed !important;
+  opacity: 0.85;
+}
+.vtable-row.locked:hover {
+  background: #fff3c4 !important;
+}
+.vtable-row.locked.selected {
+  background: #ffe082 !important;
+}
+
+/* Бейдж с информацией о блокировке */
+.lock-badge {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #ff9800;
+  color: #fff;
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+  pointer-events: none;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0,0,0,.2);
+}
+
+/* Индикатор подключения WebSocket */
+.ws-status {
+  bottom: 10px;
+  right: 10px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(0,0,0,.15);
+}
+.ws-status.connected { background: #28a745; color: #fff; }
+.ws-status.disconnected { background: #dc3545; color: #fff; }
+
+/* Форма в режиме редактирования */
+.form-panel.editing {
+  border-color: var(--success);
+  box-shadow: 0 0 0 2px rgba(26, 127, 55, 0.15);
+}
+.form-panel.editing h4::after {
+  content: ' ✏️ Редактирование';
+  color: var(--success);
+  font-size: 11px;
+  font-weight: normal;
+  margin-left: 8px;
+}
+
+/* Поля заблокированы другим пользователем */
+.form-panel input:disabled,
+.form-panel select:disabled {
+  background: #fff3c4 !important;
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+/* Бейдж "редактирует" в форме */
+.form-panel .editing-badge {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  background: #ff9800;
+  color: #fff;
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.lock-indicator {
+  margin-right: 4px;
+  font-size: 10px;
+}
+
+/* ============================================================
+   ФИЛЬТРЫ
+   ============================================================ */
+
+/* Контейнер элементов */
+.filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px 4px;
+    align-items: flex-end;
+}
+.filter-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  min-width: 100px;
+  white-space: nowrap;
+}
+
+
+
+.filter-input:focus {
+  border-color: var(--primary);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(9,105,218,.15);
+}
+
+.filter-clear {
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  color: var(--muted);
+}
+
+.filter-clear:hover {
+  background: #fee;
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+.filter-checkboxes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+flex-direction: column;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--border);
+}
+
+.filter-chk {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.filter-chk input {
+  margin: 0;
+  cursor: pointer;
+}
+
+/* Корневой блок */
+.filter-panel {
+    padding: 10px 14px;
+    background: #e6f3ff;
+   
+}
+
+
+
+/* Один элемент фильтра */
+.filter-item {
+    display: flex;
+    flex-direction: column;
+    min-width: 140px;      /* ← гарантирует, что не схлопнется */
+    flex: 1 1 180px;       /* ← адаптивная ширина */
+}
+
+/* Подпись */
+.filter-item label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    margin-bottom: 3px;
+   
+}
+
+/* Поля */
+.filter-item input,
+.filter-item select {
+    padding: 3px 6px;
+    border: 1px solid var(--border);
+     background: #edf0f0;
+    border-radius: 4px;
+    font-size: 12px;
+    min-width: 0;          /* ← критично для flex */
+}
+
+.contract-year-input:focus,
+.filter-group input:focus,
+.filter-group select:focus,
+.filter-item input:focus,
+.filter-item select:focus {
+  border-color: var(--primary);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(9,105,218,.15);
+}
+/* Поле выбора года договора (только стрелки/колесо) */
+.contract-year-input {
+    width: 57px;
+    padding: 2px 6px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 12px;
+    text-align: center;
+}
+
+.filter-input {
+  flex: 1;
+  min-width: 30; /* ← критично */
+  padding: 3px 6px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 12px;
+  background: #edf0f0;
+}
+/* Блок кнопок */
+.filter-actions {
+    display: flex;
+    gap: 10px;
+    margin-left: auto;     /* ← уходит вправо */
+    flex-wrap: wrap;
+}
+
+.filter-actions .btn {
+    flex-shrink: 0;        /* ← кнопки не сжимаются */
+}
+
+/* ============================================================
+   БАННЕР БЛОКИРОВКИ В ФОРМЕ
+   ============================================================ */
+.lock-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  margin: -10px -10px 12px -10px;
+  background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%);
+  border-bottom: 2px solid #ff9800;
+  color: #856404;
+  font-size: 13px;
+  font-weight: 500;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-100%); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+.lock-banner-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.lock-banner-text {
+  flex: 1;
+}
+
+.lock-banner-text strong {
+  color: #d2691e;
+  font-weight: 700;
+}
+
+/* ============================================================
+   БЕЙДЖ С ИМЕНЕМ В СТРОКЕ ТАБЛИЦЫ (UI, не таблица)
+   ============================================================ */
+.lock-badge-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  margin-right: 6px;
+  background: #ff9800;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: 10px;
+  white-space: nowrap;
+  vertical-align: middle;
+  box-shadow: 0 1px 3px rgba(0,0,0,.2);
+  animation: badgeAppear 0.3s ease-out;
+}
+
+@keyframes badgeAppear {
+  from { transform: scale(0.8); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+/* ============================================================
+   БЛОКИРОВКА ПОЛЕЙ ФОРМЫ
+   ============================================================ */
+.form-panel input:disabled,
+.form-panel select:disabled,
+.form-panel textarea:disabled {
+  background: #fff3cd !important;
+  cursor: not-allowed;
+  opacity: 0.7;
+  border-color: #ff9800;
+}
+
+.form-panel:has(.lock-banner) {
+  border-color: #ff9800;
+  box-shadow: 0 0 0 2px rgba(255, 152, 0, 0.2);
+}
+.filter-section {
+  display: flex;
+  flex-direction: row;    /* горизонтальное расположение */
+  align-items: flex-start; /* выравнивание по верхнему краю */
+  gap: 5px;              /* расстояние между колонками */
+  padding: 2px 4px;
+  background: #e6f3ff;
+  flex-wrap: wrap;        /* для адаптивности: на узких экранах колонки встают друг под друга */
+}
+.filter-fields {
+  flex: 2;                /* занимает 2 части от свободного пространства */
+  min-width: 280px;       /* минимальная ширина, чтобы поля не сжимались слишком сильно */
+  display: flex;
+  flex-direction: column;
+  gap: 4px;               /* отступ между строками */
+}
+
+.filter-checks {
+  flex: 1;                /* занимает 1 часть */
+  min-width: 180px;       /* минимальная ширина для чекбоксов */
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* чекбоксы выровнены по левому краю внутри своей колонки */
+}
+/* Колонки */
+.filter-columns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.filter-col {
+    flex: 1 1 260px;
+    min-width: 240px;
+}
+
+/* Группа: label + input + clear — ВСЕГДА в одной строке */
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+
+    /* Группа не ломается */
+    flex-wrap: nowrap;
+
+    /* Но сама группа может переноситься вниз */
+    width: 100%;
+    margin-bottom: 4px;
+}
+
+/* Лейбл */
+.filter-group > label {
+    white-space: nowrap;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+}
+
+/* Поле */
+.filter-group > input,
+.filter-group > select {
+    flex: 1;
+    min-width: 0;
+    padding: 4px 8px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+/* Кнопка очистить */
+.filter-clear {
+    padding: 4px 8px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: #fff;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    color: var(--muted);
+
+    /* НЕ сжимается */
+    flex-shrink: 0;
+}
+
+.filter-clear:hover {
+    background: #fee;
+    color: var(--danger);
+    border-color: var(--danger);
+}
+
+/* ============================================================
+БЛОКИРОВКА СОСТАВА ЗАПРОСА (после отправки контрагентам)
+============================================================ */
+.detali-available-container,
+.detali-buttons-container,
+.firm-available-container,
+.firm-buttons-container {
+transition: opacity 0.2s ease, max-width 0.2s ease;
+}
+
+/* При блокировке — скрываем доступные и кнопки */
+.detali-available-container.composition-locked,
+.detali-buttons-container.composition-locked,
+.firm-available-container.composition-locked,
+.firm-buttons-container.composition-locked {
+display: none !important;
+opacity: 0;
+max-width: 0;
+overflow: hidden;
+}
+
+/* При блокировке — расширяем выбранные на всю ширину строки
+   (минус фиксированная колонка кнопок) — без переполнения родителя */
+.detali-selected-container.composition-expanded,
+.firm-selected-container.composition-expanded {
+flex: 1 1 0 !important;
+min-width: 0 !important;
+max-width: none !important;
+}
+
+/* Пометка в заголовке о блокировке */
+.detali-selected-container.composition-expanded label::after,
+.firm-selected-container.composition-expanded label::after {
+content: ' 🔒 (изменение состава заблокировано)';
+color: #ff9800;
+font-size: 10px;
+font-weight: 600;
+font-style: italic;
+}
+
+/* Нижняя панель */
+.filter-bottom {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--border);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: center;
+}
+
+.filter-scope-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+}
+/* ============================================================
+КОМПАКТНЫЕ INLINE-ПОЛЯ (label + input в одной строке)
+============================================================ */
+.form-inline-compact {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+}
+.form-inline-compact label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 600;
+    white-space: nowrap;
+    margin: 0;
+}
+.form-inline-compact input {
+    padding: 3px 6px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 12px;
+    background: #fff;
+    min-width: 0;
+}
+.form-inline-compact input:focus {
+    border-color: var(--primary);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(9,105,218,.15);
+}
+
+/* Фиксированные ширины под реальный максимум данных */
+.form-inline-compact .w-num  { width: 55px;  }  /* до 1000 → 4 символа */
+.form-inline-compact .w-date { width: 135px; }  /* date input фикс. формата */
+.form-inline-compact .w-days { width: 45px;  }  /* до 30 → 2 символа */
+/* ============================================================
+   ПАТТЕРН date-or-text: дата ИЛИ текст-заглушка
+   ============================================================ */
+.date-or-text {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+}
+
+.date-or-text input[type="date"] {
+    padding: 4px 6px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 12px;
+    background: #fff;
+}
+
+.date-or-text input[type="date"]:read-only {
+    background: #f6f8fa;
+    color: var(--text);
+}
+
+.date-or-text input[type="date"].hidden {
+    display: none;
+}
+
+.date-or-text .empty-text {
+    font-size: 12px;
+    color: var(--muted);
+    font-style: italic;
+}
+
+.date-or-text .empty-text.hidden {
+    display: none;
+}
+/* ============================================================
+   FORM STATE MANAGER — визуализация изменений
+   ============================================================ */
+
+/* Подсветка изменённого поля */
+.field-modified {
+  background-color: #fff8e1 !important;
+  border-color: #ffc107 !important;
+  box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.2);
+}
+
+.field-modified:focus {
+  box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.3);
+}
+
+/* Панель формы с изменениями */
+.form-panel.form-dirty {
+  border-color: #ffc107;
+  box-shadow: 0 0 0 2px rgba(255, 193, 7, 0.15);
+}
+
+.form-panel.form-dirty h4::after {
+  content: ' ✏️ Изменено';
+  color: #f57c00;
+  font-size: 11px;
+  margin-left: 8px;
+  font-weight: normal;
+}
+
+/* Плавные переходы */
+input.field-modified,
+select.field-modified,
+textarea.field-modified {
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+/* t73: сворачиваемый блок фильтров — общая схема для всех страниц.
+   Шапка (лейбл «Фильтры» слева, кнопка-треугольник справа) всегда видна;
+   клик по кнопке показывает/скрывает .filter-section целиком:
+   ▲ свернуть, ▼ развернуть (состояние — в localStorage по странице). */
+.filters-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 3px 6px;
+  background: #e6f3ff;
+  border-radius: 4px;
+  margin-bottom: 2px;
+}
+.filters-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  user-select: none;
+}
+.filter-toggle-btn {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 18px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: #fff;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1;
+  cursor: pointer;
+}
+.filter-toggle-btn:hover { background: var(--row-hover); color: var(--text); }
+/* Свернуто: контейнер фильтров скрыт целиком, шапка остаётся */
+.filters-block.collapsed .filter-section { display: none; }
+/* ✅ T93: сворачиваемая панель фильтров «Заказов по договорам» (.filter-panel) */
+.filters-block.collapsed .filter-panel { display: none; }
