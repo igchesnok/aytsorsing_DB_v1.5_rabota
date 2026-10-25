@@ -1,0 +1,109 @@
+/* ===== public/quality.css ===== */
+/* ============================================================
+   Стили страниц ОТК (quality.html) и ТЕХНОЛОГА (defects.html).
+   Общий паттерн master-detail: transport-ops.css + style.css.
+   ============================================================ */
+
+/* ---- карточки статуса workflow ---- */
+.wyavlen          { background:#fff8c5; }
+.peredan         { background:#ddf4ff; }
+.reshenie        { background:#e6f7ea; }
+.zakryt          { color:#57606a; }
+
+.status-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid var(--border);
+}
+.sb-vyavlen           { background:#fff8c5; color:#7a5c00; }
+.sb-peredan_tehnologu { background:#ddf4ff; color:#0550ae; }
+.sb-reshenie_prinyato { background:#dafbe1; color:#116329; }
+.sb-zakryt            { background:#f0f1f3; color:#57606a; }
+.sb-v_rabote          { background:#ffe4c4; color:#8a5000; }
+
+/* ---- панель сведений о позиции/браке ---- */
+.q-info-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px 12px;
+  padding: 6px 8px;
+  background: #f6f8fa;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+.q-info-grid .k { color: var(--muted); }
+.q-info-grid .v { font-weight: 600; }
+.q-info-grid .span2 { grid-column: span 2; }
+
+/* ---- редактор карт замеров ---- */
+.zamery-toolbar { display:flex; align-items:center; gap:8px; margin: 4px 0; flex-wrap: wrap; }
+table.zam-edit { width: 100%; border-collapse: collapse; font-size: 12px; }
+table.zam-edit th {
+  background: var(--card); color: var(--primary);
+  border: 1px solid var(--border); padding: 3px 6px; font-size: 11px;
+  white-space: nowrap; text-align: left;
+}
+table.zam-edit td { border: 1px solid var(--border); padding: 2px 4px; }
+table.zam-edit input, table.zam-edit select {
+  width: 100%; box-sizing: border-box;
+  border: 1px solid transparent; background: transparent; font-size: 12px; padding: 2px;
+}
+table.zam-edit input:focus, table.zam-edit select:focus {
+  outline: none; border-color: var(--primary); background: #fff;
+}
+tr.zam-brak td { background: #ffebe9; }
+tr.zam-godno td { background: #fff; }
+.zam-del-btn { cursor:pointer; border:none; background:none; font-size:13px; color: var(--danger); }
+
+/* правило браковки — подсказка */
+.rule-hint {
+  font-size: 11px; color: var(--muted);
+  background:#f6f8fa; border:1px dashed var(--border); border-radius:4px;
+  padding:4px 8px; margin: 4px 0;
+}
+.rule-hint b.brk-all { color:#cf222e; }
+.rule-hint b.brk-part { color:#116329; }
+
+/* ---- файлы брака ---- */
+.files-list { display:flex; flex-wrap:wrap; gap:8px; margin-top:6px; }
+.file-card {
+  border:1px solid var(--border); border-radius:6px; padding:6px; width:130px;
+  font-size:11px; background:#fff; position:relative; text-align:center;
+}
+.file-card img { width:118px; height:80px; object-fit:cover; border-radius:4px; cursor:zoom-in; }
+.file-card .fname { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.file-card .fdel {
+  position:absolute; top:2px; right:2px; border:none; background:#cf222e; color:#fff;
+  border-radius:3px; cursor:pointer; font-size:10px; padding:0 4px; display:none;
+}
+.file-card:hover .fdel { display:block; }
+
+/* ---- история ---- */
+.history-list { list-style:none; margin:0; padding:0; font-size:12px; }
+.history-list li { padding:4px 6px; border-bottom:1px dashed var(--border); }
+.history-list .hdate { color: var(--muted); margin-right:6px; }
+.history-list .hact  { font-weight:600; margin-right:6px; }
+
+/* ---- форма решения технолога ---- */
+.reshenie-fieldset legend { font-weight:600; color: var(--primary); }
+.tip-radios { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+.tip-radios label {
+  border:1px solid var(--border); border-radius:6px; padding:6px 8px;
+  font-size:12px; cursor:pointer; background:#fff;
+}
+.tip-radios label:has(input:checked) { border-color: var(--primary); background:#ddf4ff; font-weight:600; }
+.resh-attrs { display:none; }
+.resh-attrs.visible { display:grid; }
+
+/* модальный просмотр фото */
+.img-modal {
+  display:none; position:fixed; inset:0; background:rgba(0,0,0,.75);
+  z-index:1000; align-items:center; justify-content:center;
+}
+.img-modal.open { display:flex; }
+.img-modal img { max-width:92vw; max-height:92vh; border-radius:6px; }

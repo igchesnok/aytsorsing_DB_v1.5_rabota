@@ -1,0 +1,183 @@
+<!-- pages/quality.html — ПРИЁМКА ОТК -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Приёмка ОТК</title>
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="../resizer.css">
+  <link rel="stylesheet" href="../tab.css">
+  <link rel="stylesheet" href="../transport-ops.css">
+  <link rel="stylesheet" href="../quality.css">
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <h1>🔍 Приёмка ОТК — грузовые позиции, прибывшие на ПТО</h1>
+      <div id="toast" class="toast hidden"></div>
+      <div id="wsStatus" class="ws-status disconnected">⚫ Offline</div>
+    </header>
+
+    <!-- Верхняя панель фильтров -->
+    <div class="transport-topbar">
+      <div class="transport-topbar-left">
+        <fieldset class="status-fieldset">
+          <legend>ЭТАП ПРИЁМКИ</legend>
+          <select id="fltStatus" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;">
+            <option value="pribylo">📥 Прибыло — ждёт приёмки</option>
+            <option value="na_otk">🔎 На ОТК (есть открытый брак)</option>
+            <option value="proshlo">✅ Прошло ОТК (брак закрыт)</option>
+            <option value="vse">Все позиции</option>
+          </select>
+        </fieldset>
+        <fieldset class="status-fieldset">
+          <legend>ПОИСК</legend>
+          <input type="text" id="fltQ" placeholder="чертёж / деталь / фирма / рейс"
+                 style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;width:260px;">
+        </fieldset>
+      </div>
+      <div class="transport-topbar-right">
+        <span id="qCounter" style="font-size:12px;color:var(--muted);"></span>
+      </div>
+    </div>
+
+    <!-- MASTER-DETAIL: список позиций + форма приёмки -->
+    <div class="panel vertikal">
+
+      <!-- ЛЕВАЯ ПАНЕЛЬ: список прибывших грузовых позиций -->
+      <div class="table-panel">
+        <div class="toolbar">
+          <h3 class="table-title">ПРИБЫЛО НА ПТО (Входящие операции)</h3>
+          <div class="toolbar-btns">
+            <button class="btn" id="btnRefresh" title="Обновить список">🔄</button>
+          </div>
+        </div>
+        <div id="prikhodTable" class="vtable-container"></div>
+      </div>
+
+      <div class="resizer"></div>
+
+      <!-- ПРАВАЯ ПАНЕЛЬ: карточка приёмки с вкладками -->
+      <div class="form-panel form-wide transport-form">
+        <nav class="tabs">
+          <button class="tab active" data-tab="tabPriyom">ПРИЁМКА / ЗАМЕРЫ</button>
+          <button class="tab" data-tab="tabBraki">ЖУРНАЛ БРАКОВ</button>
+          <button class="tab" data-tab="tabPeredacha">ПЕРЕДАЧА ТЕХНОЛОГУ</button>
+        </nav>
+
+        <div class="content">
+
+          <!-- ===== ВКЛАДКА 1: замеры ===== -->
+          <section id="tabPriyom" class="tab-content active">
+            <div class="q-info-grid" id="gpInfo">
+              <div><span class="k">Чертеж:</span> <span class="v" id="iChert">—</span></div>
+              <div><span class="k">Наименование:</span> <span class="v" id="iNaim">—</span></div>
+              <div><span class="k">Фирма:</span> <span class="v" id="iFirma">—</span></div>
+              <div><span class="k">Рейс:</span> <span class="v" id="iReis">—</span></div>
+              <div><span class="k">Прибытие:</span> <span class="v" id="iPribytie">—</span></div>
+              <div><span class="k">Годное (шт):</span> <span class="v" id="iNoBr">—</span></div>
+              <div><span class="k">Бракованное (шт):</span> <span class="v" id="iYesBr">—</span></div>
+              <div><span class="k">Всего в партии:</span> <span class="v" id="iVsego">—</span></div>
+            </div>
+
+            <fieldset>
+              <legend>КАРТЫ ЗАМЕРОВ ОТК</legend>
+              <div class="zamery-toolbar">
+                <button class="btn btn-primary" id="btnZamAdd" disabled>➕ Добавить замер</button>
+                <button class="btn btn-success"  id="btnZamSave" disabled>💾 Сохранить замеры</button>
+                <button class="btn btn-danger"   id="btnZamDelBrak" disabled>🗑 Удалить черновик брака</button>
+              </div>
+              <div class="rule-hint">
+                ⚖️ Правило браковки: передана <b>часть партии</b> и брак ≥ 1 шт →
+                <b class="brk-all">бракуется ВСЯ партия</b>; переданы <b>все детали</b> →
+                <b class="brk-part">бракуется только бракованное количество</b>.
+                Заполните «Передано шт» и «Брак шт» в строках замеров.
+              </div>
+              <div style="overflow:auto;max-height:46vh;" id="zamWrap">
+                <table class="zam-edit" id="zamTable">
+                  <thead>
+                    <tr>
+                      <th style="min-width:150px">Параметр</th>
+                      <th style="width:70px">Номинал</th>
+                      <th style="width:70px">Факт</th>
+                      <th style="width:70px">Верхн. допуск</th>
+                      <th style="width:70px">Нижн. допуск</th>
+                      <th style="width:80px">Передано шт</th>
+                      <th style="width:70px">Брак шт</th>
+                      <th style="width:100px">Результат</th>
+                      <th style="min-width:120px">Комментарий</th>
+                      <th style="width:26px"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="zamBody"></tbody>
+                </table>
+              </div>
+              <label style="font-size:12px;display:block;margin-top:6px;">Комментарий контролёра:
+                <textarea id="fKomKontrolera" rows="2" style="width:100%;font-size:12px;"></textarea>
+              </label>
+              <div id="brakRulePreview" class="rule-hint" style="display:none;"></div>
+            </fieldset>
+          </section>
+
+          <!-- ===== ВКЛАДКА 2: журнал браков позиции ===== -->
+          <section id="tabBraki" class="tab-content">
+            <div class="toolbar">
+              <h4 id="brakiTitle">Браки позиции</h4>
+              <div class="toolbar-btns">
+                <button class="btn" id="btnBrakReload">🔄</button>
+              </div>
+            </div>
+            <div id="brakiTable" class="vtable-container" style="min-height:180px;"></div>
+
+            <fieldset style="margin-top:8px;">
+              <legend>ФАЙЛЫ ВЫБРАННОГО БРАКА (фото дефектов, сканы карт)</legend>
+              <div class="zamery-toolbar">
+                <input type="file" id="fFileInput" multiple accept="image/*,.pdf" style="font-size:12px;">
+                <button class="btn btn-primary" id="btnFileUpload" disabled>⬆ Загрузить</button>
+              </div>
+              <div class="files-list" id="filesList"></div>
+            </fieldset>
+
+            <fieldset style="margin-top:8px;">
+              <legend>РЕШЕНИЕ ТЕХНОЛОГА ПО ВЫБРАННОМУ БРАКУ</legend>
+              <div id="reshenieView" style="font-size:12px;padding:4px;">— выберите брак —</div>
+            </fieldset>
+          </section>
+
+          <!-- ===== ВКЛАДКА 3: передача технологу ===== -->
+          <section id="tabPeredacha" class="tab-content">
+            <fieldset>
+              <legend>ПЕРЕДАТЬ БРАК ТЕХНОЛОГУ</legend>
+              <div id="peredachaBrakInfo" class="q-info-grid" style="grid-template-columns:1fr 1fr;"></div>
+              <div class="form-grid">
+                <label>Технолог:
+                  <select id="fTehnolog"><option value="">— Выберите технолога —</option></select>
+                </label>
+                <label>Комментарий при передаче:
+                  <input type="text" id="fPeredKom" placeholder="напр.: срочная партия">
+                </label>
+              </div>
+              <div class="param-buttons">
+                <button class="btn btn-primary" id="btnPeredet" disabled>📤 Передать технологу</button>
+              </div>
+              <p style="font-size:11px;color:var(--muted);">
+                Передавать можно только брак в статусе «выявлен». После передачи замеры блокируются для изменения.
+              </p>
+            </fieldset>
+
+            <fieldset>
+              <legend>ИСТОРИЯ ВЫБРАННОГО БРАКА</legend>
+              <ul class="history-list" id="historyList"></ul>
+            </fieldset>
+          </section>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="img-modal" id="imgModal"><img id="imgModalSrc" alt=""></div>
+
+  <script type="module" src="../js/app-quality.js"></script>
+</body>
+</html>
