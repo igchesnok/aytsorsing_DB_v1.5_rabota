@@ -320,6 +320,28 @@ if (p.match(/^\/api\/orders\/[^/]+$/) && method === 'DELETE') return await route
 // ===== ГЛОБАЛЬНЫЕ ЗАВИСИМОСТИ (СИНТЕТИЧЕСКИЕ ТАБЛИЦЫ) =====
 if (p === '/api/synthetic/dependencies' && method === 'GET')   return await routes.synthetic.GET_DEPENDENCIES(req, res);
 
+// ===== ОТК И РАБОТА С БРАКОМ (quality.html / defects.html) =====
+if (p === '/api/otk/prikhod' && method === 'GET') return await routes.brak.GET_PRIKHOD(req, res, url);
+if (p === '/api/otk/zamery') {
+  if (method === 'GET')    return await routes.brak.GET_ZAMERY(req, res, url);
+  if (method === 'POST')   return await routes.brak.POST_ZAMERY(req, res);
+}
+if (p.match(/^\/api\/otk\/zamery\/[^/]+$/) && method === 'DELETE') return await routes.brak.DELETE_ZAMERY(req, res, url);
+if (p === '/api/braki/files/upload' && method === 'POST') return await routes.brak.POST_FILE_UPLOAD(req, res, url);
+if (p.match(/^\/api\/braki\/files\/[^/]+$/) && method === 'DELETE') return await routes.brak.DELETE_FILE(req, res, url);
+if (p.match(/^\/api\/braki\/[^/]+\/peredat-tehnologu$/) && method === 'POST') return await routes.brak.POST_PEREDAT(req, res, url);
+if (p.match(/^\/api\/braki\/[^/]+\/prinyat$/) && method === 'PUT') return await routes.brak.PUT_PRINYAT(req, res, url);
+if (p.match(/^\/api\/braki\/[^/]+\/reshenie$/) && method === 'POST') return await routes.brak.POST_RESHENIE(req, res, url);
+if (p.match(/^\/api\/braki\/[^/]+\/resheniya$/) && method === 'GET')  return await routes.brak.GET_RESHENIYA(req, res, url);
+if (p.match(/^\/api\/braki\/[^/]+\/zakryt$/) && method === 'PUT') return await routes.brak.PUT_ZAKRYT(req, res, url);
+if (p === '/api/tehnolog/ochered' && method === 'GET') return await routes.brak.GET_OCHERED(req, res, url);
+if (p === '/api/braki/refs' && method === 'GET') return await routes.brak.GET_REFS(req, res, url);
+if (p === '/api/braki' && method === 'GET') return await routes.brak.GET_LIST(req, res, url);
+if (p.match(/^\/api\/braki\/[^/]+$/)) {
+  if (method === 'GET')    return await routes.brak.GET_BRAK(req, res, url);
+  if (method === 'DELETE') return await routes.brak.DELETE_BRAK(req, res, url);
+}
+
 
 if (p === '/api/test-virtual-select' && method === 'GET')
   return await routes.testVS.GET(req, res, url);

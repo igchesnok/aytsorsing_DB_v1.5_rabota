@@ -73,6 +73,8 @@ if (!fs.existsSync(PUBLIC_DIR)) fs.mkdirSync(PUBLIC_DIR, { recursive: true });
       reports: require('./src/routes/reportRoutes')(db, wsManager),
       // ✅ T102: оплата работ (страница «Оплата работ»)
       oplata:    require('./src/routes/oplataRabotRoutes')(db, wsManager),
+      // ✅ ОТК/ТЕХНОЛОГ: приёмка, замеры, брак, решения технолога
+      brak:      require('./src/routes/brakRoutes')(db, wsManager),
 
     };
 

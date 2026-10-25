@@ -1,0 +1,219 @@
+<!-- pages/defects.html — РАБОТА С БРАКОМ (ТЕХНОЛОГ) -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Работа с браком — технолог</title>
+  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="../resizer.css">
+  <link rel="stylesheet" href="../tab.css">
+  <link rel="stylesheet" href="../transport-ops.css">
+  <link rel="stylesheet" href="../quality.css">
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <h1>👨‍🔬 Работа с браком — решения технолога</h1>
+      <div id="toast" class="toast hidden"></div>
+      <div id="wsStatus" class="ws-status disconnected">⚫ Offline</div>
+    </header>
+
+    <!-- Верхняя панель фильтров -->
+    <div class="transport-topbar">
+      <div class="transport-topbar-left">
+        <fieldset class="status-fieldset">
+          <legend>ОЧЕРЕДЬ</legend>
+          <select id="fltOchered" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;">
+            <option value="mine">📌 Назначено мне</option>
+            <option value="all">Все открытые браки</option>
+          </select>
+        </fieldset>
+        <fieldset class="status-fieldset">
+          <legend>СТАТУС WORKFLOW</legend>
+          <select id="fltStatus" style="padding:4px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;">
+            <option value="">Все</option>
+            <option value="vyavlen">🟡 Выявлен (ждёт передачи)</option>
+            <option value="peredan_tehnologu">🔵 Передан технологу</option>
+            <option value="reshenie_prinyato">🟢 Решение принято</option>
+            <option value="zakryt">⚪ Закрыт</option>
+          </select>
+        </fieldset>
+      </div>
+      <div class="transport-topbar-right">
+        <span id="qCounter" style="font-size:12px;color:var(--muted);"></span>
+      </div>
+    </div>
+
+    <!-- MASTER-DETAIL -->
+    <div class="panel vertikal">
+
+      <!-- ЛЕВАЯ ПАНЕЛЬ: очередь браков -->
+      <div class="table-panel">
+        <div class="toolbar">
+          <h3 class="table-title">ОЧЕРЕДЬ БРАКОВ</h3>
+          <div class="toolbar-btns">
+            <button class="btn" id="btnRefresh" title="Обновить">🔄</button>
+          </div>
+        </div>
+        <div id="ocheredTable" class="vtable-container"></div>
+      </div>
+
+      <div class="resizer"></div>
+
+      <!-- ПРАВАЯ ПАНЕЛЬ: карточка брака -->
+      <div class="form-panel form-wide transport-form">
+        <nav class="tabs">
+          <button class="tab active" data-tab="tabBrak">БРАК / ЗАМЕРЫ</button>
+          <button class="tab" data-tab="tabReshenie">РЕШЕНИЕ ТЕХНОЛОГА</button>
+          <button class="tab" data-tab="tabIstoriya">ИСТОРИЯ И ФАЙЛЫ</button>
+        </nav>
+
+        <div class="content">
+
+          <!-- ===== ВКЛАДКА 1: сведения + замеры ===== -->
+          <section id="tabBrak" class="tab-content active">
+            <div class="q-info-grid" id="brakInfo">
+              <div><span class="k">Чертеж:</span> <span class="v" id="iChert">—</span></div>
+              <div><span class="k">Деталь:</span> <span class="v" id="iNaim">—</span></div>
+              <div><span class="k">Фирма:</span> <span class="v" id="iFirma">—</span></div>
+              <div><span class="k">Статус:</span> <span class="v" id="iStatus">—</span></div>
+              <div><span class="k">Всего в партии:</span> <span class="v" id="iVsego">—</span></div>
+              <div><span class="k">Забраковано:</span> <span class="v" id="iZabr">—</span></div>
+              <div><span class="k">Контролёр ОТК:</span> <span class="v" id="iKontroler">—</span></div>
+              <div><span class="k">Дата замера:</span> <span class="v" id="iDataZamera">—</span></div>
+              <div class="span2"><span class="k">Комментарий контролёра:</span> <span class="v" id="iKom">—</span></div>
+              <div><span class="k">Передан:</span> <span class="v" id="iPered">—</span></div>
+              <div><span class="k">Принят технологом:</span> <span class="v" id="iPrinyat">—</span></div>
+            </div>
+
+            <fieldset>
+              <legend>КАРТЫ ЗАМЕРОВ ОТК</legend>
+              <div style="overflow:auto;max-height:40vh;">
+                <table class="zam-edit">
+                  <thead>
+                    <tr>
+                      <th>Параметр</th><th>Номинал</th><th>Факт</th>
+                      <th>Верх. допуск</th><th>Ниж. допуск</th>
+                      <th>Передано шт</th><th>Брак шт</th><th>Результат</th><th>Комментарий</th>
+                    </tr>
+                  </thead>
+                  <tbody id="zamBodyView"></tbody>
+                </table>
+              </div>
+            </fieldset>
+
+            <div class="param-buttons">
+              <button class="btn btn-primary" id="btnPrinyat" disabled>📥 Принять в работу</button>
+            </div>
+          </section>
+
+          <!-- ===== ВКЛАДКА 2: решение ===== -->
+          <section id="tabReshenie" class="tab-content">
+            <fieldset class="reshenie-fieldset">
+              <legend>ТИП РЕШЕНИЯ</legend>
+              <div class="tip-radios" id="tipRadios">
+                <label><input type="radio" name="tipResh" value="otpravit_podryadchiku"> 🔄 Отправить подрядчику (возврат на переделку)</label>
+                <label><input type="radio" name="tipResh" value="peredelat_v_pto"> 🛠 Переделать в цехе ПТО</label>
+                <label><input type="radio" name="tipResh" value="spisat_okonchatelno"> ♻️ Списать окончательно</label>
+                <label><input type="radio" name="tipResh" value="dopustit_kak_godnoe"> ✅ Допустить как годное</label>
+              </div>
+            </fieldset>
+
+            <!-- атрибуты: возврат подрядчику -->
+            <fieldset class="resh-attrs" id="attrsPodryadchik">
+              <legend>ВОЗВРАТ ПОДРЯДЧИКУ</legend>
+              <div class="form-grid">
+                <label>Кто оплачивает транспорт:
+                  <select id="fKtoOplach">
+                    <option value="">— Выберите —</option>
+                    <option value="подрядчик">Подрядчик</option>
+                    <option value="заказчик">Заказчик</option>
+                  </select>
+                </label>
+                <label>Срок возврата деталей:
+                  <input type="date" id="fSrokVozvrata">
+                </label>
+              </div>
+            </fieldset>
+
+            <!-- атрибуты: переделать в ПТО -->
+            <fieldset class="resh-attrs" id="attrsCex">
+              <legend>ПЕРЕДЕЛКА В ЦЕХЕ ПТО</legend>
+              <div class="form-grid">
+                <label>Цех-изготовитель:
+                  <select id="fCex"><option value="">— Выберите цех —</option></select>
+                </label>
+                <label>Чья повторная заготовка:
+                  <select id="fChyaZagotovka">
+                    <option value="">— Не указано —</option>
+                    <option value="подрядчик">Подрядчика</option>
+                    <option value="заказчик">Заказчика (ПТО)</option>
+                  </select>
+                </label>
+              </div>
+            </fieldset>
+
+            <!-- атрибуты: списание -->
+            <fieldset class="resh-attrs" id="attrsSpisanie">
+              <legend>СПИСАНИЕ</legend>
+              <div class="form-grid">
+                <label>Сумма ущерба, ₽:
+                  <input type="number" id="fSummaUshcherba" min="0" step="0.01">
+                </label>
+                <label>Кто несёт убытки:
+                  <select id="fKtoUbitki">
+                    <option value="">— Выберите —</option>
+                    <option value="подрядчик">Подрядчик</option>
+                    <option value="заказчик">Заказчик</option>
+                  </select>
+                </label>
+              </div>
+            </fieldset>
+
+            <fieldset>
+              <legend>ЗАКЛЮЧЕНИЕ ТЕХНОЛОГА</legend>
+              <div class="form-grid">
+                <label>Номер письма контрагенту о браке:
+                  <input type="text" id="fNomerPisma" placeholder="напр.: 123/ОБ от 20.10.2026">
+                </label>
+                <label>Чья повторная заготовка (универсально):
+                  <input type="text" id="fChyaZagUniv" placeholder="подрядчик / заказчик">
+                </label>
+              </div>
+              <label style="font-size:12px;display:block;margin-top:6px;">Комментарий к решению:
+                <textarea id="fReshKom" rows="3" style="width:100%;font-size:12px;"></textarea>
+              </label>
+              <div class="param-buttons">
+                <button class="btn btn-success" id="btnSaveReshenie" disabled>💾 Принять решение</button>
+                <button class="btn btn-primary" id="btnZakryt" disabled>🏁 Закрыть брак (исполнено)</button>
+              </div>
+            </fieldset>
+
+            <fieldset>
+              <legend>ПРИНЯТЫЕ РЕШЕНИЯ (историй решений)</legend>
+              <div id="reshList" style="font-size:12px;padding:4px;">— нет решений —</div>
+            </fieldset>
+          </section>
+
+          <!-- ===== ВКЛАДКА 3: история и файлы ===== -->
+          <section id="tabIstoriya" class="tab-content">
+            <fieldset>
+              <legend>ФАЙЛЫ БРАКА</legend>
+              <div class="files-list" id="filesList"></div>
+            </fieldset>
+            <fieldset style="margin-top:8px;">
+              <legend>ЖУРНАЛ ДВИЖЕНИЯ БРАКА (braki_history)</legend>
+              <ul class="history-list" id="historyList"></ul>
+            </fieldset>
+          </section>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="img-modal" id="imgModal"><img id="imgModalSrc" alt=""></div>
+
+  <script type="module" src="../js/app-defects.js"></script>
+</body>
+</html>

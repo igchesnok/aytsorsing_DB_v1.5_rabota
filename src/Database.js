@@ -120,16 +120,25 @@ class Database {
                     }
                 });
 
-                // Seed админа
+                // Seed админа + seed пользователей ОТК/технолога/аутсорсера
                 this.db.get('SELECT COUNT(*) as cnt FROM users', [], async (err, row) => {
                     if (!err && row && row.cnt === 0) {
                         const crypto = require('crypto');
-                        const hash = crypto.createHash('sha256').update('admin123').digest('hex');
+                        const mk = (p) => crypto.createHash('sha256').update(p).digest('hex');
                         await this.db.run(
                             'INSERT INTO users (id, login, password_hash, fio, role) VALUES (?,?,?,?,?)',
-                            ['U_admin', 'admin', hash, 'Администратор Системы', 'admin']
+                            ['U_admin', 'admin', mk('admin123'), 'Администратор Системы', 'admin']
                         );
-                        console.log('✅ Seed: пользователь admin создан (пароль: admin123)');
+                        const seeds = [
+                            ['U_otk1',   'otk1',   mk('otk1'),   'Иванов Иван Иванович',    'otk'],
+                            ['U_teh1',   'teh1',   mk('teh1'),   'Петров Пётр Петрович',    'teholog'],
+                            ['U_aouts1', 'aouts1', mk('aouts1'), 'Сидоров Сидор Сидорович', 'aoutsorser'],
+                        ];
+                        for (const s of seeds) {
+                            await this.db.run(
+                                'INSERT OR IGNORE INTO users (id, login, password_hash, fio, role, aktivnost) VALUES (?,?,?,?,?,1)', s);
+                        }
+                        console.log('✅ Seed: пользователь admin создан (пароль: admin123); otk1/teh1/aouts1 (пароли = логины)');
                     }
                 });
 
@@ -815,6 +824,13 @@ class Database {
                 this.db.run(`CREATE INDEX IF NOT EXISTS idx_otk_brak ON otk_zamery(id_braka)`);
                 this.db.run(`CREATE INDEX IF NOT EXISTS idx_otk_gryz ON otk_zamery(id_gryz_poz)`);
 
+                // ✅ МИГРАЦИЯ: количество штук, переданное на замеры и забракованное
+                // по каждому параметру — нужно для правила браковки:
+                //   передана ЧАСТЬ партии + брак >=1 шт -> бракуется ВСЯ партия;
+                //   переданы ВСЕ детали -> бракуется только бракованное количество.
+                ensureCol('otk_zamery', 'sht_peredano', 'REAL DEFAULT 0');
+                ensureCol('otk_zamery', 'sht_brakovannye', 'REAL DEFAULT 0');
+
                 // Файлы, приложенные к браку (фото, сканы карт замеров)
                 this.db.run(`CREATE TABLE IF NOT EXISTS braki_files (
                     id TEXT PRIMARY KEY,
@@ -843,6 +859,37 @@ class Database {
                 )`);
                 this.db.run(`CREATE INDEX IF NOT EXISTS idx_bh_brak ON braki_history(id_braka)`);
                 this.db.run(`CREATE INDEX IF NOT EXISTS idx_bh_time ON braki_history(created_at)`);
+
+                // ✅ МИГРАЦИЯ: назначенный технолог (выбор контролёра ОТК при передаче).
+                // id_resheniya — ссылка на ПРИНЯТОЕ решение, до передачи она NULL,
+                // поэтому назначение хранится отдельно.
+                ensureCol('braki', 'id_tehnologa_naznachen', 'TEXT');
+
+                // ✅ МИГРАЦИЯ: created_at в журнале изменений — GET_OCHERED сортирует
+                // очередь по b.created_at; в существующих БД braki_history мог быть
+                // создан без этой колонки (DEFAULT CURRENT_TIMESTAMP добавляется безопасно).
+                ensureCol('braki_history', 'created_at', 'TEXT DEFAULT CURRENT_TIMESTAMP');
+
+                // ✅ seed-пользователи ролей ОТК/технолог (для существующих БД,
+                // где users уже заполнены и seed не выполнялся)
+                this.db.get('SELECT COUNT(*) c FROM users WHERE role = ?', ['otk'], async (err, row) => {
+                    if (err || !row || row.c > 0) return;
+                    const crypto = require('crypto');
+                    const mk = (login) => crypto.createHash('sha256').update(login).digest('hex');
+                    await this.db.run(
+                        'INSERT OR IGNORE INTO users (id, login, password_hash, fio, role, aktivnost) VALUES (?,?,?,?,?,1)',
+                        ['U_otk1', 'otk1', mk('otk1'), 'Иванов Иван Иванович', 'otk']);
+                    console.log('✅ Seed: пользователь otk1 добавлен (миграция, пароль = otk1)');
+                });
+                this.db.get('SELECT COUNT(*) c FROM users WHERE role = ?', ['teholog'], async (err, row) => {
+                    if (err || !row || row.c > 0) return;
+                    const crypto = require('crypto');
+                    const mk = (login) => crypto.createHash('sha256').update(login).digest('hex');
+                    await this.db.run(
+                        'INSERT OR IGNORE INTO users (id, login, password_hash, fio, role, aktivnost) VALUES (?,?,?,?,?,1)',
+                        ['U_teh1', 'teh1', mk('teh1'), 'Петров Пётр Петрович', 'teholog']);
+                    console.log('✅ Seed: пользователь teh1 добавлен (миграция, пароль = teh1)');
+                });
 
                 // ================================================================
                 // БЛОК 10: ФАКТ ВЫПОЛНЕНИЯ МАРШРУТА ПО ПАРТИИ (НОВАЯ ТАБЛИЦА!)
